@@ -53,6 +53,7 @@
 
 		.head-item:hover {
 			background-color: rgba(255,255,255,.2);
+			/*filter: blur(1px);*/
 			color: silver;
 			cursor: pointer;
 		}
@@ -155,21 +156,19 @@
 				</a>
 			</div>
 		</div>
-		<div class="item" style="background-image: url(https://pic3.zhimg.com/138402c7eaa294df3ec8b4f9dbbe8257_r.jpg)">
+		<div class="item" style="background-image: url(https://bing.ioliu.cn/v1/rand?size=0)">
 			<!-- <div class="animate"></div> -->
 		</div>
-		<div class="item" style="background-image: url(https://pic1.zhimg.com/c0e6a1fb76775b05fc5acf8200ab3b8c_r.jpg)">
-<!-- 			<div class="animate">
-				阿狗是傻逼
-			</div> -->
+		<div class="item" style="background-image: url(https://bing.ioliu.cn/v1/rand?size=1)">
+<!-- 			<div class="animate"></div> -->
 		</div>
-		<div class="item" style="background-image: url(https://pic4.zhimg.com/7d6e12985dfdb526e902443a7dc9abfe_r.jpg)">
+		<div class="item" style="background-image: url(https://bing.ioliu.cn/v1/rand?size=2)">
 			<!-- <div class="animate"></div> -->
 		</div>
-		<div class="item" style="background-image: url(https://pic2.zhimg.com/ed93cb4a546971f4dfaaf31666dfb8b1_r.jpg);">
+		<div class="item" style="background-image: url(https://bing.ioliu.cn/v1/rand?size=3);">
 			<!-- <div class="animate"></div> -->
 		</div>
-		<div class="item" style="background-image: url(https://pic4.zhimg.com/1b7b489b49ca91a10fe6d0979e2eb465_r.jpg)">
+		<div class="item" style="background-image: url(https://bing.ioliu.cn/v1/rand?size=4)">
 			<!-- <div class="animate"></div> -->
 		</div>
 		<ul class="anchor">
@@ -181,6 +180,7 @@
 		</ul>
 	</div>
 	<script type="text/javascript">
+		// getImages();
 		var root = document.getElementById('root');
 		var items = document.getElementsByClassName('animate');
 		var dots = document.getElementsByClassName('dot');
@@ -235,6 +235,14 @@
 	        	behavior: 'smooth'
             })
 		}	
+
+		function getImages() {
+			const URL = 'https://bing.ioliu.cn/v1/rand?size=';
+			var items = document.getElementsByClassName('item');
+			for(let i=0;i<items.length;i++) {
+				items[i].style.backgroundImage = "url(" + URL + i + ")";
+			};
+		}
 	</script>
 </body>
 </html>
