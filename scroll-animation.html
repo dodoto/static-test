@@ -18,14 +18,55 @@
 		.head {
 			position: fixed;
 			height: 70px;
+			width: 50%;
+			min-width: 500px;
+			left: 0; right: 0;
+			margin: auto;
+			background-color: transparent;
+		}
+
+		.head-item {
+			width: 25%;
+			line-height: 70px;
+			text-align: center;
+			float: left;
+			position: relative;
+		}
+
+		.head-item a {
+			color: #fff;
+			font-family: heiti;
+			font-weight: bold;
+			text-decoration: none;
+		}
+
+		.head-item:after {
+			content: '';
+			display: block;
+			height: 2px;
+			position: absolute;
+			bottom: 0;left: 0; right: 0;
+			width: 0;
+			background-color: silver;
+			margin: auto;
+		}
+
+		.head-item:hover {
+			background-color: rgba(255,255,255,.2);
+			color: silver;
+			cursor: pointer;
+		}
+
+		.head-item:hover:after {
+			transition: all .5s;
 			width: 100%;
-			background-color: lime;
-			box-shadow: 0 0 10px 0 teal;
 		}
 
 		.item {
 			height: 100%;
 			text-align: center;
+			background-position: center top;
+			background-size: cover;
 		}
 
 		.item:after {
@@ -92,22 +133,47 @@
 </head>
 <body>
 	<div id="root">
-		<div class="head"></div>
-		<div class="item" style="background-color: steelblue">
-			<div class="animate">
-				阿狗是傻逼
+		<div class="head">
+			<div class="head-item">
+				<a href="https://www.hacg.tw/wp/" target="_blank">
+					Latest
+				</a>
+			</div>
+			<div class="head-item">
+				<a href="https://www.hacg.tw/wp/category/all/comic/" target="_blank">
+					Manga
+				</a>
+			</div>
+			<div class="head-item">
+				<a href="https://www.hacg.tw/wp/category/all/anime/" target="_blank">
+					Animation
+				</a>
+			</div>
+			<div class="head-item">
+				<a href="https://www.hacg.tw/wp/tag/%E9%AD%94%E7%A9%97%E5%AD%97%E5%B9%95%E7%BB%84/" target="_blank">
+					魔穗字幕组
+				</a>
 			</div>
 		</div>
-		<div class="item" style="background-color: orange">
-			<div class="animate"></div>
+		<div class="item" style="background-image: url(https://pic3.zhimg.com/138402c7eaa294df3ec8b4f9dbbe8257_r.jpg)">
+			<!-- <div class="animate"></div> -->
 		</div>
-		<div class="item" style="background-color: pink">
-			<div class="animate"></div>
+		<div class="item" style="background-image: url(https://pic1.zhimg.com/c0e6a1fb76775b05fc5acf8200ab3b8c_r.jpg)">
+<!-- 			<div class="animate">
+				阿狗是傻逼
+			</div> -->
 		</div>
-		<div class="item" style="background-color: aqua">
-			<div class="animate"></div>
+		<div class="item" style="background-image: url(https://pic4.zhimg.com/7d6e12985dfdb526e902443a7dc9abfe_r.jpg)">
+			<!-- <div class="animate"></div> -->
+		</div>
+		<div class="item" style="background-image: url(https://pic2.zhimg.com/ed93cb4a546971f4dfaaf31666dfb8b1_r.jpg);">
+			<!-- <div class="animate"></div> -->
+		</div>
+		<div class="item" style="background-image: url(https://pic4.zhimg.com/1b7b489b49ca91a10fe6d0979e2eb465_r.jpg)">
+			<!-- <div class="animate"></div> -->
 		</div>
 		<ul class="anchor">
+			<li class="dot"></li>
 			<li class="dot"></li>
 			<li class="dot"></li>
 			<li class="dot"></li>
@@ -121,7 +187,7 @@
 		var scroll_height = document.getElementsByClassName('item')[0].clientHeight;
 		var index = 0;
 		var timer = null;
-		items[index].classList.add('animation');
+		// items[index].classList.add('animation');
 		dots[index].classList.add('shadow');
 
 		for(let i=0;i<dots.length;i++) {
@@ -132,7 +198,7 @@
 				dots[index].classList.remove('shadow');
 				dots[i].classList.add('shadow');
 				index = i;
-				items[index].classList.add('animation');
+				// items[index].classList.add('animation');
 				scroll(root,index*scroll_height);
 			};
 		};
@@ -154,13 +220,13 @@
            		}
            		if(e.wheelDelta < 0) {     //当鼠标滚轮向下滚动时
            			index++;
-           			index = index > 3 ? 3 : index;
-           			items[index].classList.add('animation');
+           			index = index > 4 ? 4 : index;
+           			// items[index].classList.add('animation');
            		}
            		dots[index].classList.add('shadow');
            		scroll(root,index*scroll_height);
            		timer = null;
-           	},100)
+           	},300)
 		}
 
 		function scroll(el,top) {
