@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title></title>
+	<style type="text/css">
+
+		body {
+			height: 200vh;
+		}
+
+		.test {
+			width: 654px;
+			height: 436px;
+			display: block;
+			margin: 30px auto;
+			opacity: 0;
+			transition: opacity 300ms linear;
+		}
+	</style>
+</head>
+<body>
+	<img src="" class="test" data-src="https://pic4.zhimg.com/80/v2-e34f9372a05a00a6f5778f6357ec2b0d_720w.jpg?source=1940ef5c" />
+	<img src="" class="test" data-src="https://pic4.zhimg.com/80/v2-8edde88d4f64057c7e99847164445555_720w.jpg?source=1940ef5c" />
+	<img src="" class="test" data-src="https://pic1.zhimg.com/80/v2-53414f0e6f72b4706420974b075239e4_720w.jpg?source=1940ef5c" />
+	<img src="" class="test" data-src="https://pic4.zhimg.com/80/v2-0687ae60cc782edf3d4d1d3ea53df40c_720w.jpg?source=1940ef5c" />
+	<img src="" class="test" data-src="https://pic4.zhimg.com/80/v2-cb0e4f8cfc2ba10cdb1ae881b005d1c7_720w.jpg?source=1940ef5c" />
+	<img src="" class="test" data-src="https://pic1.zhimg.com/80/v2-d86e77ad8da6232051ff604d68280160_720w.jpg?source=1940ef5c" />
+	<img src="" class="test" data-src="https://pic1.zhimg.com/80/v2-879a65e8dba00653cd9ea1b50620267d_720w.jpg?source=1940ef5c" />
+	<img src="" class="test" data-src="https://pic4.zhimg.com/80/v2-5acc946f33c3a17b2d67e6afc7ea1397_720w.jpg?source=1940ef5c" />
+	<img src="" class="test" data-src="https://pic4.zhimg.com/80/v2-712509a5174e91a8ae5cf91c6d778650_720w.jpg?source=1940ef5c" />
+	<img src="" class="test" data-src="https://pic2.zhimg.com/80/v2-1391294d761b2c604d4a131662196703_720w.jpg?source=1940ef5c" />
+	<script type="text/javascript">
+		var test = document.getElementsByClassName('test');
+		var observer = new IntersectionObserver(function (entries) {
+			// if (entries[0].intersectionRatio <= 0) return;
+			entries.forEach(function(item) {
+				// console.log(item)
+				if(item.isIntersecting) {
+					item.target.src = item.target.dataset.src;
+					item.target.style.opacity = 1;
+					observer.unobserve(item.target);
+				}
+			});
+		});
+		for(let item of test) {
+			observer.observe(item);
+		};
+	</script>
+</body>
+</html>
