@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title></title>
+</head>
+<body>
+	<canvas />
+	<script type="text/javascript">
+		function painting(beginX,beginY,stopX,stopY,ctx) {
+			ctx.beginPath();
+			ctx.globalAlpha = 1;
+			ctx.lineWidth = 3;
+			ctx.strokeStyle = 'steelblue';
+			ctx.moveTo(beginX,beginY);
+			ctx.lineTo(stopX,stopY);
+			ctx.closePath();
+			ctx.stroke();
+		}
+		let canvas = document.getElementsByTagName('canvas')[0];
+		let ctx = canvas.getContext('2d');
+		// canvas.onmousedown = function(e) {
+		// 	let beginX = e.clientX,
+		// 		beginY = e.clientY
+		// 	canvas.onmousemove = function(e) {
+		// 		let stopX = e.clientX,
+		// 		    stopY = e.clientY
+		// 		painting(beginX,beginY,stopX,stopY,ctx);
+		// 		beginX = stopX;
+		// 		beginY = stopY;    
+		// 	}
+		// 	document.onmouseup = function(e) {
+		// 		canvas.onmousemove = null;
+		// 		document.onmouseup = null;
+		// 	}	
+		// }
+		canvas.ontouchstart = function(e) {
+			e.preventDefault();
+			let beginX = e.touches[0].clientX,
+				beginY = e.touches[0].clientY
+			canvas.ontouchmove = function(e) {
+				e.preventDefault();
+				let stopX = e.touches[0].clientX,
+				    stopY = e.touches[0].clientY
+				painting(beginX,beginY,stopX,stopY,ctx);
+				beginX = stopX;
+				beginY = stopY;    
+			}
+		}
+	</script>
+</body>
+</html>
