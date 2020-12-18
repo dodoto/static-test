@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>3d-rotate</title>
+	<style type="text/css">
+
+		.out {
+		  
+		   perspective: 500px;
+
+		}
+
+		.box {
+		  position: relative;
+		  width: 200px;
+		  height: 200px;
+		  margin: 100px auto;
+		  transition: transform 1000ms linear;
+		  background-color: pink;
+
+		  /* 让子元素保持3d立体空间环境 */
+		  transform-style: preserve-3d;
+		}
+
+		.box:hover {
+		  transform: rotateY(-180deg);
+		  -webkit-transform: rotateY(-180deg);
+		}
+
+		.box div {
+		  position: absolute;
+		  top: 0;
+		  left: 0;
+		  width: 100%;
+		  height: 100%;
+		  backface-visibility: hidden;
+		  /*background-color: pink;*/
+		}
+
+		.box div img {
+			width: 100%;
+		}
+
+		.back {
+			transform: rotateY(180deg);
+			-webkit-transform: rotateY(180deg);
+			/*z-index: -2;*/
+		}
+
+	</style>
+</head>
+<body>
+	<div class="out">
+		<div class="box">
+			<div class="front">
+				<img src="https://pic1.zhimg.com/80/v2-99351b87b1e0a9aa9a9d07bba0318376_720w.jpg?source=1940ef5c">
+			</div>
+			<div class="back">
+				<img src="https://pic1.zhimg.com/80/v2-0ef8864ca3191c8c1f7c885d602eced6_720w.jpg?source=1940ef5c">
+			</div>
+		</div>
+	</div>
+</body>
+</html>
