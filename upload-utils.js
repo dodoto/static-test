@@ -1,9 +1,8 @@
-
 export function getReadFunc() {
   let timer = null;
   let files = [];
   let folders = [];
-  return function (items,callback,createFolder,upload) {
+  return function (items,callback) {
     if(!callback) {
       console.log('callback is required');
       return
@@ -14,20 +13,10 @@ export function getReadFunc() {
     };
     if(timer) clearTimeout(timer);
     timer = setTimeout(()=>{
-      console.log('timer',timer);
-      console.log('build',folders.length);
-      // createFolder()
-      console.log('upload',files);
-      // upload()
+      console.log({folders,files});
       callback = null;
     },500);
-    items.forEach(item => {
-      let target;
-      if(item.webkitGetAsEntry) {
-        target = item.webkitGetAsEntry();
-      }else{
-        target = item;
-      }
+    items.forEach(target => {
       if(target.isFile) {
         console.log('is file');
         target.file(file=> files.push({file,path:target.fullPath}));
