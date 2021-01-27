@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Drag Test</title>
+  <style>
+    * { margin: 0; padding: 0}
+    .container {
+      width: 200px;
+      height: 320px;
+      margin: auto;
+    }
+    .drag-item {
+      height: 40px;
+      transition: transform .3s linear;
+      position: relative;
+      user-select: none;
+      text-align: center;
+    }
+    .skyblue {
+      background-color: skyblue;
+    }
+    .teal {
+      background-color: teal;
+    }
+    .tan {
+      background-color: tan;
+    }
+    .wheat {
+      background-color: wheat;
+    }
+    .thistle {
+      background-color: thistle;
+    }
+    .azure {
+      background-color: azure;
+    }
+    .cadetablue {
+      background-color: cadetblue;
+    }
+    .lightslategrey {
+      background-color: lightslategrey;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="drag-item skyblue" data-index="0" data-y="0">逼</div>
+    <div class="drag-item teal" data-index="1" data-y="0">大</div>
+    <div class="drag-item tan" data-index="2" data-y="0">是</div>
+    <div class="drag-item wheat" data-index="3" data-y="0">傻</div>
+    <div class="drag-item thistle" data-index="4" data-y="0">真</div>
+    <div class="drag-item azure" data-index="5" data-y="0">个</div>
+    <div class="drag-item cadetablue" data-index="6" data-y="0">我</div>
+    <div class="drag-item lightslategrey" data-index="7" data-y="0">啊</div>
+  </div>
+  <script>
+    //交换位置时,修改自身的data-index,保存当前的偏移量到data-y,还需要交换数据位置
+    let items = Array.from(document.getElementsByClassName('drag-item'));
+    items.forEach(item => {
+      item.onmousedown = function(e) {
+        let el = this;
+        let dragIndex = parseInt(el.dataset.index);                         //被拖拽的index
+        let offsetIndex = null;                                             //偏移的index
+        //获取自己之前的偏移量
+        let beforeY = parseInt(el.dataset.y);
+        el.style.transition = 'transform 0s linear';
+        el.style.zIndex = 99;
+        let { clientX:beginX, clientY: beiginY } =e;
+        document.onmousemove = function(e) {
+          let { clientX, clientY } = e;
+          let x = clientX-beginX;
+          let y = clientY-beiginY;
+          
+          el.style.WebkitTransform = `translate3d(${x}px,${y+beforeY}px,0)`;
+          
+          let offset = Math.round(y/40)+dragIndex;
+
+          if(offset > items.length-1) offset = items.length - 1;
+          if(offset < 0) offset = 0;
+          if(offsetIndex === offset) return
+          
+          let dir = 0;
+          if(offset - offsetIndex > 0) {
+            console.log('正向,向下移动');
+            dir = 1;
+          };
+          if(offset - offsetIndex < 0) {
+            console.log('反向,向上移动');
+            dir = -1;
+          };
+          offsetIndex = offset;
+          console.log('经过',offsetIndex)
+
+          //交换位置
+          let sib = items[offsetIndex];
+          if(sib && sib !== el) {
+            //交换 index
+            let index = sib.dataset.index;
+            sib.dataset.index = el.dataset.index;
+            el.dataset.index = index;
+            //交换数组位置
+            items[index] = el;
+            items[index-dir] = sib;
+            //交换dom位置
+            let transformY = -(dir * 40) + parseInt(sib.dataset.y);
+            sib.dataset.y = transformY;
+            sib.style.WebkitTransform = `translate3d(0,${transformY}px,0)`;
+          } 
+        }
+
+        document.onmouseup = function() {
+          el.style.transition = 'transform .3s linear';
+          el.style.zIndex = 1;
+
+          if(offsetIndex !== null) {
+            let afterY = (offsetIndex-dragIndex)*40 + beforeY;
+            el.style.WebkitTransform = `translate3d(0,${afterY}px,0)`;
+            el.dataset.y = afterY;
+          }else{
+            el.style.WebkitTransform = `translate3d(0,${beforeY}px,0)`;
+          }
+          document.onmousemove = null;
+          document.onmouseup = null;
+        }
+      };
+    });
+  </script>
+</body>
+</html>
