@@ -67,13 +67,12 @@
         let beforeY = parseInt(el.dataset.y);
         el.style.transition = 'transform 0s linear';
         el.style.zIndex = 99;
-        let { clientX:beginX, clientY: beiginY } =e;
+        let { clientY: beiginY } =e;
         document.onmousemove = function(e) {
           let { clientX, clientY } = e;
-          let x = clientX-beginX;
           let y = clientY-beiginY;
           
-          el.style.WebkitTransform = `translate3d(${x}px,${y+beforeY}px,0)`;
+          el.style.WebkitTransform = `translate3d(0,${y+beforeY}px,0)`;
           
           let offset = Math.round(y/40)+dragIndex;
 
@@ -83,11 +82,11 @@
           
           let dir = 0;
           if(offset - offsetIndex > 0) {
-            console.log('正向,向下移动');
+            // console.log('正向,向下移动');
             dir = 1;
           };
           if(offset - offsetIndex < 0) {
-            console.log('反向,向上移动');
+            // console.log('反向,向上移动');
             dir = -1;
           };
           offsetIndex = offset;
