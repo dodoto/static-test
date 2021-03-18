@@ -1,30 +1,39 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { ScrollView, TextInput, Text, View, Keyboard, StyleSheet, Animated, Easing } from 'react-native';
-// import Animated, { Easing, useValue } from 'react-native-reanimated';
+import { ScrollView, TextInput, Text, View, Keyboard, StyleSheet, Animated, Easing, Dimensions, DeviceEventEmitter } from 'react-native';
 
+const height = Dimensions.get("window").height - 80 - 40;
 export default function ChatInput() {
   const msgs = new Array(50).fill('我是聊天信息')
-  
-  // useEffect(()=>{
-  //   let test = Keyboard.addListener('keyboardDidHide',showBt)
-  //   return () => test.remove()
-  // },[])
+
+  const msgList = useRef();
+
+  const scrollHeight = useRef(new Animated.Value(height)).current;
+
+  useEffect(()=>{
+    const handler = (y) => {
+      scrollHeight.setValue(y)
+      requestAnimationFrame(()=>{
+        msgList.current.scrollToEnd({animated:true});
+      })
+    };
+    const listener = DeviceEventEmitter.addListener('toBottom',handler);
+    return () => listener.remove()
+  },[scrollHeight])
 
   return (
     <>
       <Text style={styles.head}>我是聊天窗口头部</Text>
 
       <View style={styles.box}>
-
-        <View style={styles.chatwindow}>
-          <ScrollView>
+        <Animated.View style={[{height:scrollHeight}]}>
+          <ScrollView ref={msgList}>
             {
               msgs.map((item,index) => (
                 <Text style={{marginHorizontal:20,marginTop:10,backgroundColor:'skyblue'}} key={index}>{item+index}</Text>
               ))
             }
           </ScrollView>
-        </View>
+        </Animated.View>
         <Input />
       </View>
 
@@ -34,18 +43,19 @@ export default function ChatInput() {
 
 //Dimenssion    style and useInsets 
 //屏幕高度 598 - head 高度 80 - input 高度 40 = 478
+
 function Input() {
 
   const [type,setType] = useState('')
 
-  const translateY = useRef(new Animated.Value(478)).current;
+  const translateY = useRef(new Animated.Value(height)).current;
 
   const btAnime = (dest) => {
     Animated.timing(
       translateY,
       {
         toValue: dest,
-        duration: 10,
+        duration: 100,
         easing: Easing.ease,
         useNativeDriver: true
       }
@@ -53,38 +63,50 @@ function Input() {
   }
 
   const pressEmoji = () => {
+    let bottom = 0;
     if(type === 'emoji') {
       setType('')
-      btAnime(478)
+      btAnime(height)
+      bottom = height;
     }else{
       if(type === 'keyboard') Keyboard.dismiss();
       setType('emoji')
-      let dest = 478 - 220
+      let dest = height - 220
       btAnime(dest)
+      bottom = dest
     }
+    DeviceEventEmitter.emit('toBottom',bottom);
   }
 
   const pressUtil = () => {
+    let bottom = 0;
     if(type === 'util') {
       setType('')
-      btAnime(478)
+      btAnime(height)
+      bottom = height;
     }else{
       if(type === 'keyboard') Keyboard.dismiss();
       setType('util')
-      let dest = 478 - 220
+      let dest = height - 250
       btAnime(dest)
+      bottom = dest;
     }
+    DeviceEventEmitter.emit('toBottom',bottom);
   }
 
   useEffect(()=>{
     let test1 = Keyboard.addListener('keyboardDidShow',(e)=>{
-      let dest = 478 - Math.ceil(e.endCoordinates.height)
+      let dest = height - Math.ceil(e.endCoordinates.height)
       setType('keyboard');
       // btAnime(dest)
-      translateY.setValue(dest)
+      translateY.setValue(dest);
+      DeviceEventEmitter.emit('toBottom',dest);
     })
     let test2 = Keyboard.addListener('keyboardDidHide',(e)=>{
-      if(!type || type === 'keyboard') translateY.setValue(478)
+      if(!type || type === 'keyboard') {
+        translateY.setValue(height)
+        DeviceEventEmitter.emit('toBottom',height);
+      }
     })
     return () => {
       test1.remove();
@@ -123,7 +145,7 @@ const styles = StyleSheet.create({
   },
   chatwindow: {
     flex:1,
-    paddingBottom:40    //textinput的高度
+    //paddingBottom:40    //textinput的高度
   },
   inputbox: {
     position:'absolute',
@@ -150,3 +172,5 @@ const styles = StyleSheet.create({
     color: '#fff'
   }
 });
+
+//如果使用paddingBottom或者marginBottom会导致键盘和表情工具切换时,键盘先消失,padding或margin才归0,有一瞬间的白色闪烁
