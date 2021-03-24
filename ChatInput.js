@@ -13,7 +13,7 @@ export default function ChatInput() {
   const scrollHeight = useValue(height);
 
   const handler = (y) => {
-   Animated.timing(
+    Animated.timing(
       scrollHeight,
       {
         toValue: y,
@@ -23,6 +23,10 @@ export default function ChatInput() {
     ).start(()=>{
       msgList.current.scrollToEnd({animated:true});
     })
+    // scrollHeight.setValue(y)
+    // requestAnimationFrame(()=>{
+    //   msgList.current.scrollToEnd({animated:true});
+    // })
   }
 
   useEffect(()=>{
@@ -87,7 +91,7 @@ function Input({onToolChange}) {
     }else{
       if(type === 'keyboard') Keyboard.dismiss();
       setType('emoji')
-      let dest = height - 220
+      let dest = height - 200
       btAnime(dest)
       bottom = dest
     }
@@ -163,10 +167,10 @@ function Input({onToolChange}) {
         </View>
       </View>
 
-      <View style={{height:220,backgroundColor:'#fff'}}>
+      <View style={{flex:1,backgroundColor:'#fff'}}>
         {/* <Text>我是工具栏</Text> */}
-        { type === 'emoji' && <Text>我是表情</Text> }
-        { type === 'util' && <Text>我是功能栏</Text> }
+        { type === 'emoji' && <Text style={{backgroundColor:'steelblue',height:200}}>我是表情</Text> }
+        { type === 'util' && <Text style={{backgroundColor:'pink',height:220}}>我是功能栏</Text> }
       </View>
     </Animated.View> 
   );
