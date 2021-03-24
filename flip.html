@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title></title>
+	<style type="text/css">
+
+		* { margin: 0; padding: 0;}
+		.box {
+			position: absolute;
+			top: 50%; left: 50%;
+			transform: translate(-50%,-50%);
+			border-radius: 10px;
+			display: flex;
+			flex-wrap: wrap;
+			justify-content: space-around;
+			align-items: center;
+			column-count: 4;
+			width: 400px;
+			height: 400px;
+			background-color: skyblue;
+		}
+
+		.item {
+			width: 22%;
+			height: 22%;
+			text-align: center;
+			line-height: 120px;
+			border-radius: 10px;
+			color: #333;
+			transition: transform 300ms linear;
+		}
+
+	</style>
+</head>
+<body>
+	<button>shuffle</button>
+	<button>reset</button>
+	<div class="box">
+		<div class="item" style="background-color: coral">1</div>
+		<div class="item" style="background-color: pink">2</div>
+		<div class="item" style="background-color: greenyellow">3</div>
+		<div class="item" style="background-color: orange">4</div>
+		<div class="item" style="background-color: lavender">5</div>
+		<div class="item" style="background-color: linen">6</div>
+		<div class="item" style="background-color: peru">7</div>
+		<div class="item" style="background-color: slategray">8</div>
+		<div class="item" style="background-color: teal">9</div>
+		<div class="item" style="background-color: steelblue">10</div>
+		<div class="item" style="background-color: lightblue">11</div>
+		<div class="item" style="background-color: plum">12</div>
+		<div class="item" style="background-color: mintcream">13</div>
+		<div class="item" style="background-color: floralwhite">14</div>
+		<div class="item" style="background-color: firebrick">15</div>
+		<div class="item" style="background-color: lightcyan">16</div>
+	</div>
+
+	<script type="text/javascript">
+
+		let shuffle = document.getElementsByTagName('button')[0];
+
+		let reset = document.getElementsByTagName('button')[1];
+
+		let items = document.getElementsByClassName('item');
+
+		let data = Array.from(items).map((item,index) => index);
+
+		let positionMap = [];
+
+		// 记住当前的位置
+		for(let item of items) {
+			positionMap.push({x:item.offsetLeft,y:item.offsetTop});
+		}
+
+		shuffle.onclick = function() {
+			data.sort(() => .5 - Math.random());	
+			data.forEach((item,index) => {
+				let prev = positionMap[item];
+				let next = positionMap[index];
+				let x = next.x - prev.x;
+				let y = next.y - prev.y;
+				items[item].style.webkitTransform = `translate(${x}px,${y}px)`;	
+			})	
+		}
+
+		reset.onclick = function() {
+			data = Array.from(items).map((item,index) => index);
+			data.forEach((item,index) => {
+				let prev = positionMap[item];
+				let next = positionMap[index];
+				let x = next.x - prev.x;
+				let y = next.y - prev.y;
+				items[item].style.webkitTransform = `translate(${x}px,${y}px)`;	
+			})
+		}
+
+
+	</script>
+</body>
+</html>
