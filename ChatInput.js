@@ -13,8 +13,14 @@ export default function ChatInput() {
   const scrollHeight = useValue(height);
 
   const handler = (y) => {
-    scrollHeight.setValue(y)
-    requestAnimationFrame(()=>{
+   Animated.timing(
+      scrollHeight,
+      {
+        toValue: y,
+        duration: 10,
+        easing: Easing.linear
+      }
+    ).start(()=>{
       msgList.current.scrollToEnd({animated:true});
     })
   }
