@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title></title>
+	<style type="text/css">
+		.box {
+			margin: 200px;
+			width: 200px;
+			height: 200px;
+			background-color: skyblue;
+			position: absolute;
+		}
+	</style>
+</head>
+<body>
+	<div class="box">
+		
+	</div>
+	<script type="text/javascript">
+		let box = document.getElementsByClassName('box')[0];
+		let x = 0 , y = 0;
+		box.onmousedown = function(e) {
+			let { clientX, clientY } = e;
+			let beginX = clientX - x;
+			let beginY = clientY - y;
+			let offsetX = 0, offsetY = 0; 
+			document.onmousemove = function(e) {
+				let { clientX:moveX, clientY:moveY } = e;
+				offsetX = moveX - beginX;
+				offsetY = moveY - beginY;
+				box.style.WebkitTransform = `translate(${offsetX}px,${offsetY}px)`;
+			}
+			document.onmouseup = function() {
+				console.log(offsetX,offsetY)
+				x = offsetX;
+				y = offsetY;
+				document.onmousemove = null;
+				document.onmouseup = null;
+			}
+		}
+	</script>
+</body>
+</html>

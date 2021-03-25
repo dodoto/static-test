@@ -24,7 +24,7 @@
 			width: 22%;
 			height: 22%;
 			text-align: center;
-			line-height: 120px;
+			line-height: 88px;
 			border-radius: 10px;
 			color: #333;
 			transition: transform 300ms linear;
@@ -72,7 +72,14 @@
 		}
 
 		shuffle.onclick = function() {
-			data.sort(() => .5 - Math.random());	
+			// data.sort(() => .5 - Math.random());	
+
+		  let i = data.length;
+		  let j;
+		  while (--i) {
+		    j = Math.floor(Math.random() * i);
+		    [data[i],data[j]] = [data[j],data[i]];
+		  }
 			data.forEach((item,index) => {
 				let prev = positionMap[item];
 				let next = positionMap[index];
