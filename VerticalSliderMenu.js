@@ -7,18 +7,15 @@ import {
   PanResponder, 
   StyleSheet, 
   DeviceEventEmitter,
-  Dimensions 
+  InteractionManager
 } from 'react-native'
 
-const height = Dimensions.get('window').height
 export default class VerticalSliderMenu extends React.Component {
 
   state = {
     component: null,
-    height: 20  //controlbar height
+    height: 0
   }
-
-  translateY = new Animated.Value(height)
 
   componentTranslateY = new Animated.Value(0)
 
@@ -34,14 +31,13 @@ export default class VerticalSliderMenu extends React.Component {
         { useNativeDriver: false }
     ),
     onPanResponderRelease: () => {
-        if(this.componentTranslateY._value > this.state.height/2) {
+        if(this.componentTranslateY._value > (this.state.height+35)/2) {
             //消失
-            this.hidde()
+            this.close()
         }else{
             //复原
             this.back()
         }
-        console.log('relese')
     }
   })
 
@@ -50,7 +46,7 @@ export default class VerticalSliderMenu extends React.Component {
       value,
       {
         toValue: dest,
-        duration: 300,
+        duration: 250,
         easing: Easing.linear,
         useNativeDriver: true
       }
@@ -58,33 +54,32 @@ export default class VerticalSliderMenu extends React.Component {
   }
 
   //组件的出现
-  open() {
-    this.animate(this.translateY,0)
+  open(component,height) {
+    this.componentTranslateY.setValue(height)
+    this.setState({ component, height},() => {
+      this.animate(this.componentTranslateY,0)
+    })
   }
   //组件的关闭
   close() {
-    this.animate(this.translateY,height)
-  }
-  // 菜单的消失
-  hidde() {
-    this.animate(this.componentTranslateY,this.state.height,this.close)
-  }
-  // 菜单的复原
-  back() {
-    this.animate(this.componentTranslateY,0)
+    const { componentTranslateY, state } = this
+    let callback = () => this.setState({ component: null, height: 0 })
+    this.animate(componentTranslateY,state.height,callback)
   }
 
   close = this.close.bind(this)
 
+  back() {
+    this.animate(this.componentTranslateY,0)
+  }
+
   componentDidMount() {
     this.handler = DeviceEventEmitter.addListener('callSliderMenu',({show,component,height})=>{
+      // height += 50
       if(show) {
-        this.componentTranslateY.setValue(0)
-        this.open()
-        this.setState({ component, height: height + 20 })
+        this.open(component,height)
       }else{
         this.close()
-        this.setState({ component: null, height: 0 })
       }
     })
   }
@@ -94,35 +89,37 @@ export default class VerticalSliderMenu extends React.Component {
   }
 
   render() {
-    const { translateY, state, componentTranslateY } = this
-    const opacity = translateY.interpolate({
-      inputRange: [0,200],
+    const { state, componentTranslateY } = this
+    const opacity = componentTranslateY.interpolate({
+      inputRange: [0,state.height],
       outputRange: [1,0],
       extrapolate: 'clamp'
     })
-    const _translateY = componentTranslateY.interpolate({
+    const translateY = componentTranslateY.interpolate({
       inputRange: [0,state.height],
       outputRange: [0,state.height],
       extrapolate: 'clamp'
     })
-    return (
-      <Animated.View style={[styles.container,{opacity}]} pointerEvents="box-none">
-        <Animated.View 
-          style={[styles.full,{transform:[{translateY}]}]}
-        >
-          <Text style={styles.full} onPress={this.close}></Text>
+    if(state.component) {
+      return (
+        <View style={styles.container}>
+          <Animated.Text style={[styles.full,{opacity}]} onPress={this.close}></Animated.Text>
           <Animated.View 
             {...this.panResponder.panHandlers}
-            style={[{height:state.height},{transform:[{translateY:_translateY}]}]}
+            style={[{transform:[{translateY}]}]}
           >
             <View style={styles.controlBar}>
               <Text style={styles.block}></Text>
             </View>
-            {state.component && state.component()}
+            <View style={{height:state.height,backgroundColor:'#fff'}}>
+              {state.component}
+            </View>
           </Animated.View>
-        </Animated.View>
-      </Animated.View>
-    )
+        </View>
+      )
+    }else{
+      return null
+    }
   }
 
 }
@@ -130,14 +127,17 @@ export default class VerticalSliderMenu extends React.Component {
 const styles = StyleSheet.create({
   container:{
     position:'absolute',
-    backgroundColor:'rgba(0,0,0,0.6)',
-    top: 0, left: 0, right: 0, bottom: 0
+    top: 0, left: 0, right: 0, bottom: 0,
+    justifyContent: 'flex-end'
   },
   full: {
-    flex:1
+    position: 'absolute',
+    width: '100%', height: '100%',
+    backgroundColor:'rgba(0,0,0,0.6)',
+    zIndex: -1
   },
   controlBar: {
-    height:20,
+    height:35,
     backgroundColor:'#fff',
     borderTopLeftRadius: 10,
     borderTopRightRadius: 10
