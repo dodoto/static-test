@@ -61,12 +61,13 @@
 		for(let btn of btns) {
 			btn.addEventListener('click',function(e) {
 				let { width, height, top, left } = btn.getBoundingClientRect();
+				// let { layerY, layerX } = e
+				// console.log(layerX,layerY)
 				let { ripple, classList } = createRipple()
 				btn.appendChild(ripple)
 				let r = Math.max(width, height);
 				
 				ripple.style.height = ripple.style.width = r + 'px';
-
 				ripple.style.top = e.layerY - r/2 + 'px';
 				ripple.style.left = e.layerX - r/2  + 'px';
 				classList.add('ripple-active');
@@ -75,6 +76,11 @@
 				},1200)
 			})
 		}
+
+		// 总结
+		// 使用 pointer-events: none 来避免 ripple互相影响导致 layerX 和 layerY 坐标不正确
+		// 使用到 layerX 和 layerY 时, 再去 evt 对象读取, 达到 js 阻塞 UI 来实现 ripple 过渡效果
+		// 提前定义好 layerX 和 layerY 之后, 后续调用 e.layerX 或 e.layerY 都是从定义好的地方取,不是重新去 evt 对象读取
 	</script>
 </body>
 </html>
