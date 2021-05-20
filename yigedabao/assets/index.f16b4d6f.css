@@ -1,0 +1,1 @@
+.aside{color:#f5f5f5}#aside-show:checked~.aside{transform:translateX(0)}#aside-show:checked~.side-menu-toggle label i::after{content:"\f0cd"}@media screen and (max-width:500px){.side-menu-toggle{display:block}.header{left:0}.main{margin-left:0}.aside{transform:translateX(-100%)}}

@@ -1,0 +1,1 @@
+import{e,f as s,g as t}from"./index.c4318c28.js";function n(){let s=null;return{ref:e((()=>s)),setRef:e=>{s=e}}}function r(){let e=[];return s((()=>{e=[]})),t((()=>{console.log("updated",e)})),{refs:e,setRefs:s=>{e.push(s)}}}export{n as a,r as u};

@@ -192,6 +192,7 @@
 		var scroll_height = document.getElementsByClassName('item')[0].clientHeight;
 		var index = 0;
 		var timer = null;
+		var isScrolling = false;
 		// items[index].classList.add('animation');
 		dots[index].classList.add('shadow');
 
@@ -212,26 +213,25 @@
 			scroll_height = document.getElementsByClassName('item')[0].clientHeight;
 		}
 
-		root.onmousewheel  = function(e) {
-			// e.preventDefault(); 
-           	if(timer) {
-           		clearTimeout(timer);
-           	}
-           	timer = setTimeout(function() {
-           		dots[index].classList.remove('shadow');
-           		if(e.wheelDelta > 0) {     //当鼠标滚轮向上滚动时
-           			index--;
-           			index = index < 0 ? 0 : index;
-           		}
-           		if(e.wheelDelta < 0) {     //当鼠标滚轮向下滚动时
-           			index++;
-           			index = index > 4 ? 4 : index;
-           			// items[index].classList.add('animation');
-           		}
-           		dots[index].classList.add('shadow');
-           		scroll(root,index*scroll_height);
-           		timer = null;
-           	},300)
+		root.onmousewheel = function(e) {
+			if(isScrolling) return
+       		isScrolling = true;	
+       		dots[index].classList.remove('shadow');
+       		if(e.wheelDelta > 0) {     //当鼠标滚轮向上滚动时
+       			index--;
+       			index = index < 0 ? 0 : index;
+       		}
+       		if(e.wheelDelta < 0) {     //当鼠标滚轮向下滚动时
+       			index++;
+       			index = index > 4 ? 4 : index;
+       			// items[index].classList.add('animation');
+       		}
+       		dots[index].classList.add('shadow');
+       		scroll(root,index*scroll_height);
+       		timer = null;
+       		setTimeout(function(){
+       			isScrolling = false;
+       		},1000)
 		}
 
 		function scroll(el,top) {

@@ -1,0 +1,1 @@
+import{G as s,H as a,b as e,c,J as d,d as n}from"./index.c4318c28.js";import"./vendor.0e657c5f.js";const o={name:"NotFound"},t=d("data-v-2789fe31");s("data-v-2789fe31");const i={class:"out"},r=n("div",{class:"circle-line"},null,-1),l=n("div",{class:"inner"},"404!",-1);a();const v=t(((s,a,d,n,o,t)=>(e(),c("div",i,[r,l]))));o.render=v,o.__scopeId="data-v-2789fe31";export default o;
