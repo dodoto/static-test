@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>2d-getColor</title>
+  <style>
+    canvas {
+      width: 300px;
+      height: 200px;
+    }
+  </style>
+</head>
+<body>
+  <input type="file">
+  <canvas width="300" height="200">如果看到这句话说明浏览器不支持canvas</canvas>
+  <script>
+
+    const input = document.getElementsByTagName('input')[0]
+
+    const ctx = document.getElementsByTagName('canvas')[0].getContext('2d')
+
+    let imgUrl
+
+    //清除选中的文件
+    function removeFile() {
+      input.outerHTML = input.outerHTML
+    }
+
+    //使用createObjectURl来获取图片地址(也可以使用FileReader)
+    function getObjectURL(file) {
+      let url = null ;
+      if (window.createObjectURL!=undefined) { // basic
+        url = window.createObjectURL(file) 
+      } else if (window.URL!=undefined) { // mozilla(firefox)
+        url = window.URL.createObjectURL(file) 
+      } else if (window.webkitURL!=undefined) { // webkit or chrome
+        url = window.webkitURL.createObjectURL(file) 
+      }
+	    return url 
+    }
+
+    //移除生成的图片地址
+    function removeObjectURL() {
+      if (window.revokeObjectURL!=undefined) { // basic
+        imgUrl = window.revokeObjectURL(imgUrl) 
+      } else if (window.URL!=undefined) { // mozilla(firefox)
+        imgUrl = window.URL.revokeObjectURL(imgUrl) 
+      } else if (window.webkitURL!=undefined) { // webkit or chrome
+        imgUrl = window.webkitURL.revokeObjectURL(imgUrl) 
+      }
+    }
+
+    //画到canvas里
+    function drawToCanvas() {
+      const img = new Image()
+      img.onload = function() {
+        ctx.drawImage(img,0,0,200,200)
+      }
+      img.src = imgUrl
+    }
+
+    //判断是否图片
+    function isImg(fileName) {
+      const pattern = /\.(jpg|jpeg|png|GIF|JPG|PNG)$/
+      if (pattern.test(fileName) ) return  true
+      alert('请选择图片文件')
+	    return false
+    }
+
+    input.onchange = function(e) {
+      const file = e.target.files[0]
+      if(isImg(file.name)) {
+        if(imgUrl) removeObjectURL()
+        imgUrl = getObjectURL(file)
+        drawToCanvas()
+      }
+    }
+
+  </script>
+</body>
+</html>
