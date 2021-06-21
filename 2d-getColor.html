@@ -17,6 +17,10 @@
   <canvas width="300" height="200">如果看到这句话说明浏览器不支持canvas</canvas>
   <script>
 
+    const block1 = [], block2 = [], block3 = [], block4 = []
+
+    let rmax, rmin, gmax, gmin, bmax, bmin
+
     const input = document.getElementsByTagName('input')[0]
 
     const ctx = document.getElementsByTagName('canvas')[0].getContext('2d')
@@ -57,8 +61,80 @@
       const img = new Image()
       img.onload = function() {
         ctx.drawImage(img,0,0,200,200)
+        const pixels = getPixels()
+        const line = getMiddleLine()
+        rmax = rmin = gmax = gmin = bmax = bmin = undefined
+        pixels.forEach(pixel => {
+          if(pixel[line['key']] >= line['value']) {
+            block1.push(pixel)
+          }else{
+            block2.push(pixel)
+          } 
+        })
       }
       img.src = imgUrl
+    }
+
+    //获取所有像素
+    function getPixels() {
+      const { data } = ctx.getImageData(0,0,200,200)
+      const pixels = []
+      for(let i = 0;i < data.length;i += 4) {
+        const pixel = {}
+        const r = pixel['r'] = data[i]
+        const g = pixel['g'] = data[i+1]
+        const b = pixel['b'] = data[i+2]
+        // pixel['a'] = data[i+3]
+        pixels.push(pixel)
+        getPixelMaxAndMin(r,g,b)
+      }
+      console.log(rmax,rmin,gmax,gmin,bmax,bmin)
+      return pixels
+    }
+
+    //获取中位切割线
+    function getMiddleLine() {
+      const r = rmax - rmin
+      const g = gmax - gmin
+      const b = bmax - bmin
+      const max = Math.max(r,g,b)
+      if(r === max) return {key:'r',value:max/2}
+      if(g === max) return {key:'g',value:max/2}
+      if(b === max) return {key:'b',value:max/2}
+    }
+
+    //获取像素最大值和最小值
+    function getPixelMaxAndMin(r,g,b) {
+      if(rmax === undefined) {
+        rmax = r
+      }else{
+        rmax = Math.max(rmax,r)
+      }
+      if(rmin === undefined) {
+        rmin = r
+      }else{
+        rmin = Math.min(rmin,r)
+      }
+      if(gmax === undefined) {
+        gmax = g
+      }else{
+        gmax = Math.max(gmax,g)
+      }
+      if(gmin === undefined) {
+        gmin = g
+      }else{
+        gmin = Math.min(gmin,g)
+      }
+      if(bmax === undefined) {
+        bmax = b
+      }else{
+        bmax = Math.max(bmax,b)
+      }
+      if(bmin === undefined) {
+        bmin = b
+      }else{
+        bmin = Math.min(bmin,b)
+      }
     }
 
     //判断是否图片
@@ -75,6 +151,66 @@
         if(imgUrl) removeObjectURL()
         imgUrl = getObjectURL(file)
         drawToCanvas()
+        setTimeout(() => {
+          block1.reduce((acc,pixel,index) => {
+          acc['r'] += pixel['r']
+          acc['g'] += pixel['g']
+          acc['b'] += pixel['b']
+          getPixelMaxAndMin(pixel['r'],pixel['g'],pixel['b'])
+          if(index === block1.length - 1) {
+            const r = acc['r'] = acc['r'] / block1.length
+            const b = acc['g'] = acc['g'] / block1.length
+            const g = acc['b'] = acc['b'] / block1.length
+            console.log(`rgb(${r},${g},${b})`,1,block1.length)
+          }
+          return acc
+        },{r:0,g:0,b:0})
+        const line1 = getMiddleLine()
+        console.log(rmax,rmin,gmax,gmin,bmax,bmin)
+        block1.forEach(pixel => {
+          if(pixel[line1['key']] >= line1['value']) {
+            block3.push(pixel)
+          }else{
+            block4.push(pixel)
+          } 
+        })
+        block2.reduce((acc,pixel,index) => {
+          acc['r'] += pixel['r']
+          acc['g'] += pixel['g']
+          acc['b'] += pixel['b']
+          if(index === block2.length - 1) {
+            const r = acc['r'] = acc['r'] / block2.length
+            const g = acc['g'] = acc['g'] / block2.length
+            const b = acc['b'] = acc['b'] / block2.length
+            console.log(`rgb(${r},${g},${b})`,2,block2.length)
+          }
+          return acc
+        },{r:0,g:0,b:0})
+        block3.reduce((acc,pixel,index) => {
+          acc['r'] += pixel['r']
+          acc['g'] += pixel['g']
+          acc['b'] += pixel['b']
+          if(index === block3.length - 1) {
+            const r = acc['r'] = acc['r'] / block3.length
+            const g = acc['g'] = acc['g'] / block3.length
+            const b = acc['b'] = acc['b'] / block3.length
+            console.log(`rgb(${r},${g},${b})`,3,block3.length)
+          }
+          return acc
+        },{r:0,g:0,b:0})
+        block4.reduce((acc,pixel,index) => {
+          acc['r'] += pixel['r']
+          acc['g'] += pixel['g']
+          acc['b'] += pixel['b']
+          if(index === block4.length - 1) {
+            const r = acc['r'] = acc['r'] / block4.length
+            const g = acc['g'] = acc['g'] / block4.length
+            const b = acc['b'] = acc['b'] / block4.length
+            console.log(`rgb(${r},${g},${b})`,4,block4.length)
+          }
+          return acc
+        },{r:0,g:0,b:0})
+        },2000)
       }
     }
 
