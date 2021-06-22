@@ -9,21 +9,52 @@
     canvas {
       width: 300px;
       height: 200px;
+      display: none;
+    }
+    .result > img {
+      float: left;
+    }
+    .result > div {
+      margin-left: 320px;
+    }
+    @media screen and (max-width:500px) {
+      .result > img {
+        float: none;
+      }
+      .result > div {
+        margin-left: 0;
+      }
     }
   </style>
 </head>
 <body>
+  <h1>中位切割法获取图片颜色主要颜色</h1>
+  <pre>
+    使用中位切分法(将所有像素映射到三维坐标上(r,g,b))
+    获取图片所有像素  canvas 的 getImageData
+    计算边界 rmax gmax bmax rmin gmin bmin, 代表包裹像素分布区域的长宽高
+    从维度最大的轴来做中位切割
+    按照上述重复切割
+    //4个色块切3次
+    //8个色块切7次
+    //按色块所包含像素数量从大到小排
+    色块数量只能按 2 4 8 16 来, 目前默认为8
+    计算所有色块的平均值作为当前色块的代表色
+  </pre>
   <input type="file">
   <canvas width="300" height="200">如果看到这句话说明浏览器不支持canvas</canvas>
+  <div class="result"></div>
   <script>
 
-    const block1 = [], block2 = [], block3 = [], block4 = []
+    const count = 8
 
-    let rmax, rmin, gmax, gmin, bmax, bmin
+    let result = []
 
     const input = document.getElementsByTagName('input')[0]
 
     const ctx = document.getElementsByTagName('canvas')[0].getContext('2d')
+
+    const resultDiv = document.getElementsByTagName('div')[0]
 
     let imgUrl
 
@@ -58,83 +89,105 @@
 
     //画到canvas里
     function drawToCanvas() {
-      const img = new Image()
+      const img = new Image(320)
       img.onload = function() {
         ctx.drawImage(img,0,0,200,200)
         const pixels = getPixels()
-        const line = getMiddleLine()
-        rmax = rmin = gmax = gmin = bmax = bmin = undefined
-        pixels.forEach(pixel => {
-          if(pixel[line['key']] >= line['value']) {
-            block1.push(pixel)
-          }else{
-            block2.push(pixel)
-          } 
+        slicePixels(pixels)
+        const len = result.length
+        repeatSlicePixels(len)
+        result.sort((a,b) => b.length - a.length) //降序
+        result.forEach(data => {
+          let accR = 0, accG = 0, accB = 0
+          let len = data.length
+          data.forEach(item => {
+            accR += item['r']
+            accG += item['g']
+            accB += item['b']
+          })
+          const div = document.createElement('div')
+          Object.assign(div.style,{
+            backgroundColor: `rgb(${Math.floor(accR/len)},${Math.floor(accG/len)},${Math.floor(accB/len)})`,
+            height: '50px',
+          })
+          resultDiv.appendChild(div)
         })
       }
       img.src = imgUrl
+      resultDiv.appendChild(img)
     }
 
-    //获取所有像素
+    //切割像素
+    function slicePixels(pixels,tag) {
+      let rmax, rmin, gmax, gmin, bmax, bmin
+      pixels.forEach(pixel => {
+        const r = pixel['r']
+        const g = pixel['g']
+        const b = pixel['b']
+        rmax = getMaxBoundary(rmax,r)
+        rmin = getMinBoundary(rmin,r)
+        gmax = getMaxBoundary(gmax,g) 
+        gmin = getMinBoundary(gmin,g)
+        bmax = getMaxBoundary(bmax,b) 
+        bmin = getMinBoundary(bmin,b)
+      })
+      const median = getMedian(rmax,rmin,gmax,gmin,bmax,bmin)
+      const block1 = [], block2 = []
+      pixels.forEach(pixel => {
+        if(pixel[median['key']] >= median['value']) {
+          block1.push(pixel)
+        }else{
+          block2.push(pixel)
+        }
+      })
+      if(block1.length === 0 || block2.length === 0) console.log(median,rmax,rmin,gmax,gmin,bmax,bmin)
+      result.push(block1,block2)
+    }
+
+    //重复切割
+    function repeatSlicePixels(len) {
+      if(len < count) {
+        result.forEach(data => slicePixels(data)) //等价于for(let i = 0;i<len-1;i++)
+        result.splice(0,len)
+        repeatSlicePixels(result.length)
+      }
+    }
+
+    //获取像素点
     function getPixels() {
       const { data } = ctx.getImageData(0,0,200,200)
+      // const pixel = {r,g,b,a}
       const pixels = []
       for(let i = 0;i < data.length;i += 4) {
         const pixel = {}
-        const r = pixel['r'] = data[i]
-        const g = pixel['g'] = data[i+1]
-        const b = pixel['b'] = data[i+2]
+        pixel['r'] = data[i]
+        pixel['g'] = data[i+1]
+        pixel['b'] = data[i+2]
         // pixel['a'] = data[i+3]
         pixels.push(pixel)
-        getPixelMaxAndMin(r,g,b)
       }
-      console.log(rmax,rmin,gmax,gmin,bmax,bmin)
       return pixels
     }
 
-    //获取中位切割线
-    function getMiddleLine() {
+    //获取边界(最大最小rgb)
+    function getMaxBoundary(max,diff) {
+      if(max === undefined) return diff
+      return Math.max(max,diff)
+    }
+    function getMinBoundary(min,diff) {
+      if(min === undefined) return diff
+      return Math.min(min,diff)
+    }
+
+    //获取中位线
+    function getMedian(rmax,rmin,gmax,gmin,bmax,bmin) {
       const r = rmax - rmin
       const g = gmax - gmin
       const b = bmax - bmin
       const max = Math.max(r,g,b)
-      if(r === max) return {key:'r',value:max/2}
-      if(g === max) return {key:'g',value:max/2}
-      if(b === max) return {key:'b',value:max/2}
-    }
-
-    //获取像素最大值和最小值
-    function getPixelMaxAndMin(r,g,b) {
-      if(rmax === undefined) {
-        rmax = r
-      }else{
-        rmax = Math.max(rmax,r)
-      }
-      if(rmin === undefined) {
-        rmin = r
-      }else{
-        rmin = Math.min(rmin,r)
-      }
-      if(gmax === undefined) {
-        gmax = g
-      }else{
-        gmax = Math.max(gmax,g)
-      }
-      if(gmin === undefined) {
-        gmin = g
-      }else{
-        gmin = Math.min(gmin,g)
-      }
-      if(bmax === undefined) {
-        bmax = b
-      }else{
-        bmax = Math.max(bmax,b)
-      }
-      if(bmin === undefined) {
-        bmin = b
-      }else{
-        bmin = Math.min(bmin,b)
-      }
+      if(r === max) return {key:'r',value:(rmax + rmin)/2}
+      if(g === max) return {key:'g',value:(gmax + gmin)/2}
+      if(b === max) return {key:'b',value:(bmax + bmin)/2}
     }
 
     //判断是否图片
@@ -148,69 +201,13 @@
     input.onchange = function(e) {
       const file = e.target.files[0]
       if(isImg(file.name)) {
-        if(imgUrl) removeObjectURL()
+        if(imgUrl) {
+          removeObjectURL()
+          result = []
+          resultDiv.innerHTML = ''
+        }
         imgUrl = getObjectURL(file)
         drawToCanvas()
-        setTimeout(() => {
-          block1.reduce((acc,pixel,index) => {
-          acc['r'] += pixel['r']
-          acc['g'] += pixel['g']
-          acc['b'] += pixel['b']
-          getPixelMaxAndMin(pixel['r'],pixel['g'],pixel['b'])
-          if(index === block1.length - 1) {
-            const r = acc['r'] = acc['r'] / block1.length
-            const b = acc['g'] = acc['g'] / block1.length
-            const g = acc['b'] = acc['b'] / block1.length
-            console.log(`rgb(${r},${g},${b})`,1,block1.length)
-          }
-          return acc
-        },{r:0,g:0,b:0})
-        const line1 = getMiddleLine()
-        console.log(rmax,rmin,gmax,gmin,bmax,bmin)
-        block1.forEach(pixel => {
-          if(pixel[line1['key']] >= line1['value']) {
-            block3.push(pixel)
-          }else{
-            block4.push(pixel)
-          } 
-        })
-        block2.reduce((acc,pixel,index) => {
-          acc['r'] += pixel['r']
-          acc['g'] += pixel['g']
-          acc['b'] += pixel['b']
-          if(index === block2.length - 1) {
-            const r = acc['r'] = acc['r'] / block2.length
-            const g = acc['g'] = acc['g'] / block2.length
-            const b = acc['b'] = acc['b'] / block2.length
-            console.log(`rgb(${r},${g},${b})`,2,block2.length)
-          }
-          return acc
-        },{r:0,g:0,b:0})
-        block3.reduce((acc,pixel,index) => {
-          acc['r'] += pixel['r']
-          acc['g'] += pixel['g']
-          acc['b'] += pixel['b']
-          if(index === block3.length - 1) {
-            const r = acc['r'] = acc['r'] / block3.length
-            const g = acc['g'] = acc['g'] / block3.length
-            const b = acc['b'] = acc['b'] / block3.length
-            console.log(`rgb(${r},${g},${b})`,3,block3.length)
-          }
-          return acc
-        },{r:0,g:0,b:0})
-        block4.reduce((acc,pixel,index) => {
-          acc['r'] += pixel['r']
-          acc['g'] += pixel['g']
-          acc['b'] += pixel['b']
-          if(index === block4.length - 1) {
-            const r = acc['r'] = acc['r'] / block4.length
-            const g = acc['g'] = acc['g'] / block4.length
-            const b = acc['b'] = acc['b'] / block4.length
-            console.log(`rgb(${r},${g},${b})`,4,block4.length)
-          }
-          return acc
-        },{r:0,g:0,b:0})
-        },2000)
       }
     }
 
