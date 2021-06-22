@@ -35,11 +35,16 @@
     计算边界 rmax gmax bmax rmin gmin bmin, 代表包裹像素分布区域的长宽高
     从维度最大的轴来做中位切割
     按照上述重复切割
-    //4个色块切3次
-    //8个色块切7次
+    //第一个是平均色
+    //最后一个是主色
     //按色块所包含像素数量从大到小排
-    色块数量只能按 2 4 8 16 来, 目前默认为8
+    //画入canvas是 200*200, 所以总像素为4w
+    色块数量按 2 4 8 16 来, 目前默认为8
     计算所有色块的平均值作为当前色块的代表色
+    最后,将结果色块从rgb转为Lab,计算差值,差值小于40定义为相似颜色,合并颜色,获取到图片主色调
+    <a href="https://blog.csdn.net/yuzi_lixiaoge/article/details/52781506">rgb 转 Lab</a>
+    <a href="http://www.colormine.org/delta-e-calculator">颜色相似度计算</a>
+    <a href="https://stackoverflow.com/questions/5392061/algorithm-to-check-similarity-of-colors">关于颜色相似的处理链接</a> 
   </pre>
   <input type="file">
   <canvas width="300" height="200">如果看到这句话说明浏览器不支持canvas</canvas>
@@ -49,6 +54,8 @@
     const count = 8
 
     let result = []
+
+    let colors = []   //颜色
 
     const input = document.getElementsByTagName('input')[0]
 
@@ -93,10 +100,10 @@
       img.onload = function() {
         ctx.drawImage(img,0,0,200,200)
         const pixels = getPixels()
-        slicePixels(pixels)
-        const len = result.length
-        repeatSlicePixels(len)
+        slicePixels(pixels) 
+        repeatSlicePixels(result.length)
         result.sort((a,b) => b.length - a.length) //降序
+        // console.log(result)
         result.forEach(data => {
           let accR = 0, accG = 0, accB = 0
           let len = data.length
@@ -105,16 +112,136 @@
             accG += item['g']
             accB += item['b']
           })
-          const div = document.createElement('div')
-          Object.assign(div.style,{
-            backgroundColor: `rgb(${Math.floor(accR/len)},${Math.floor(accG/len)},${Math.floor(accB/len)})`,
-            height: '50px',
+          const r = Math.round(accR/len)
+          const g = Math.round(accG/len)
+          const b = Math.round(accB/len)
+          const bgColor = `rgb(${r},${g},${b})`
+          colors.push({
+            len,
+            lab: rgbToLab(r,g,b),      
+            rgb: [r,g,b],
+            index: 1         //表示累计,默认1
           })
-          resultDiv.appendChild(div)
+          createDiv(bgColor)
         })
+        //将颜色转换成Lab,进行deltaE计算,差值目前决定在30之内
+        // console.log(colors)
+        combineColors()
+        const mainColor = getMainColor()
+        createDiv(mainColor)
       }
       img.src = imgUrl
       resultDiv.appendChild(img)
+    }
+
+    //获取主色调
+    function getMainColor() {
+      let max = 0, maxIndex = 0
+      colors.forEach((color,index) => {
+        if(color['len'] > max) {
+          max = color['len']
+          maxIndex = index
+        }
+      })
+      const r = colors[maxIndex]['rgb'][0]
+      const g = colors[maxIndex]['rgb'][1]
+      const b = colors[maxIndex]['rgb'][2]
+      const len = Math.max(colors[maxIndex]['index']-0.5,1)
+      return `rgb(${r/len},${g/len},${b/len})`
+    }
+
+    //合并颜色
+    function combineColors() {
+      for(let i = 0;i < colors.length;i++) {
+        for(let j = i + 1;j < colors.length;j++) {
+          const diff = deltaE(colors[i]['lab'],colors[j]['lab'])
+          if(diff <= 40) {
+            colors[i]['len'] += colors[j]['len']
+            colors[i]['rgb'][0] += colors[j]['rgb'][0]
+            colors[i]['rgb'][1] += colors[j]['rgb'][1]
+            colors[i]['rgb'][2] += colors[j]['rgb'][2]
+            colors[i]['index']++
+            colors.splice(j,1)
+          }
+        }
+      }
+    }
+
+    //deltaE
+    function deltaE(color1,color2) {
+      // (l2-l1)
+      const l = Math.pow(color2[0] - color1[0],2)
+      const a = Math.pow(color2[1] - color1[1],2)
+      const b = Math.pow(color2[2] - color1[1],2)
+      return Math.sqrt(l + a + b)
+    }
+
+    //rgb 转 Lab
+    function rgbToLab(r, g, b) {
+      r /= 255, g /= 255, b /= 255;
+      if ( r > 0.04045 ){
+			  r = Math.pow(( r + 0.055 ) / 1.055, 2.4);
+      } else {
+        r = r / 12.92;
+      }
+      if ( g > 0.04045 ){
+        g = Math.pow(( g + 0.055 ) / 1.055, 2.4);
+      } else {
+        g = g / 12.92;
+      }
+      if ( b > 0.04045 ){
+        b = Math.pow(( b + 0.055 ) / 1.055, 2.4);
+      } else {
+        b = b / 12.92;
+      }
+      // sRGB
+      let X = r * 0.436052025 + g * 0.385081593 + b * 0.143087414;
+      let Y = r * 0.222491598 + g * 0.716886060 + b * 0.060621486;
+      let Z = r * 0.013929122 + g * 0.097097002 + b * 0.714185470;
+      // XYZ range: 0~100
+      X = X * 100.000;
+      Y = Y * 100.000;
+      Z = Z * 100.000;
+      // Reference White Point
+      let ref_X = 96.4221;
+      let ref_Y = 100.000;
+      let ref_Z = 82.5211;
+      X = X / ref_X;
+      Y = Y / ref_Y;
+      Z = Z / ref_Z;
+      // Lab
+      if (X > 0.008856){
+        X = Math.pow(X, 1/3.000);
+      } else {
+        X = ( 7.787 * X ) + ( 16 / 116.000 );
+      }
+      if (Y > 0.008856){
+        Y = Math.pow(Y, 1/3.000);
+      } else {
+        Y = ( 7.787 * Y ) + ( 16 / 116.000 );
+      }
+      if (Z > 0.008856){
+        Z = Math.pow(Z, 1/3.000);
+      } else {
+        Z = ( 7.787 * Z ) + ( 16 / 116.000 );
+      }
+  
+      let lab_L = ( 116.000 * Y ) - 16.000;
+      let lab_A = 500.000 * ( X - Y );
+      let lab_B = 200.000 * ( Y - Z );
+  
+      return [lab_L, lab_A , lab_B];
+
+    }
+
+    //生成色块
+    function createDiv(bgColor) {
+      const div = document.createElement('div')
+      Object.assign(div.style,{
+        backgroundColor: bgColor,
+        height: '50px',
+      })
+      resultDiv.appendChild(div)
     }
 
     //切割像素
@@ -140,7 +267,6 @@
           block2.push(pixel)
         }
       })
-      if(block1.length === 0 || block2.length === 0) console.log(median,rmax,rmin,gmax,gmin,bmax,bmin)
       result.push(block1,block2)
     }
 
@@ -158,14 +284,18 @@
       const { data } = ctx.getImageData(0,0,200,200)
       // const pixel = {r,g,b,a}
       const pixels = []
+      let r = 0, g = 0, b = 0
       for(let i = 0;i < data.length;i += 4) {
         const pixel = {}
-        pixel['r'] = data[i]
-        pixel['g'] = data[i+1]
-        pixel['b'] = data[i+2]
+        r += pixel['r'] = data[i]
+        g += pixel['g'] = data[i+1]
+        b += pixel['b'] = data[i+2]
         // pixel['a'] = data[i+3]
         pixels.push(pixel)
       }
+      const len = pixels.length
+      const bgColor = `rgb(${Math.round(r/len)},${Math.round(g/len)},${Math.round(b/len)})`
+      createDiv(bgColor) //平均色
       return pixels
     }
 
@@ -204,6 +334,7 @@
         if(imgUrl) {
           removeObjectURL()
           result = []
+          colors = []
           resultDiv.innerHTML = ''
         }
         imgUrl = getObjectURL(file)
