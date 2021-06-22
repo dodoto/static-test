@@ -36,7 +36,6 @@
     从维度最大的轴来做中位切割
     按照上述重复切割
     //第一个是平均色
-    //最后一个是主色
     //按色块所包含像素数量从大到小排
     //画入canvas是 200*200, 所以总像素为4w
     色块数量按 2 4 8 16 来, 目前默认为8
@@ -128,7 +127,8 @@
         // console.log(colors)
         combineColors()
         const mainColor = getMainColor()
-        createDiv(mainColor)
+        // createDiv(mainColor)
+        document.body.style.backgroundColor = mainColor
       }
       img.src = imgUrl
       resultDiv.appendChild(img)
@@ -146,8 +146,8 @@
       const r = colors[maxIndex]['rgb'][0]
       const g = colors[maxIndex]['rgb'][1]
       const b = colors[maxIndex]['rgb'][2]
-      const len = Math.max(colors[maxIndex]['index']-0.5,1)
-      return `rgb(${r/len},${g/len},${b/len})`
+      const len = colors[maxIndex]['index']
+      return `rgb(${r/len},${g/len},${b/len},0.8)`
     }
 
     //合并颜色
