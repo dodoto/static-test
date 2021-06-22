@@ -6,24 +6,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>2d-getColor</title>
   <style>
-    canvas {
-      width: 300px;
-      height: 200px;
-      display: none;
+canvas {
+      width: 0px;
+    }
+    .result {
+      display: grid;
+      grid-template-columns: repeat(auto-fill,minmax(320px,1fr));
+      gap: 4px;
     }
     .result > img {
-      float: left;
-    }
-    .result > div {
-      margin-left: 320px;
-    }
-    @media screen and (max-width:500px) {
-      .result > img {
-        float: none;
-      }
-      .result > div {
-        margin-left: 0;
-      }
+      grid-row-start: 1;
+      grid-row-end: 10;
     }
   </style>
 </head>
