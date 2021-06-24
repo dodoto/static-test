@@ -7,7 +7,7 @@
   <link rel="icon" href="favicon.jpg">
   <title>2d-getColor</title>
   <style>
-canvas {
+    canvas {
       width: 0px;
     }
     .result {
@@ -19,6 +19,12 @@ canvas {
       grid-row-start: 1;
       grid-row-end: 10;
     }
+    .result > div:nth-child(2)::before {
+      content: '这个是平均色↓';
+      display: block;
+      position: relative;
+      left: 0; top: -24px;
+    }
   </style>
 </head>
 <body>
@@ -29,28 +35,45 @@ canvas {
     计算边界 rmax gmax bmax rmin gmin bmin, 代表包裹像素分布区域的长宽高
     从维度最大的轴来做中位切割
     按照上述重复切割
-    //第一个是平均色
     //按色块所包含像素数量从大到小排
     //画入canvas是 200*200, 所以总像素为4w
-    色块数量按 2 4 8 16 来, 目前默认为8
+    //色块数量按 2 4 8 16 来, 目前默认为8, 修改为不切割所有色块,选择当前像素量最大的块切割,一直到数量满足要求
     计算所有色块的平均值作为当前色块的代表色
-    最后,将结果色块从rgb转为Lab,计算差值,差值小于40定义为相似颜色,合并颜色,获取到图片主色调
+    //最后,将结果色块从rgb转为Lab,计算差值,差值小于40定义为相似颜色,合并颜色,获取到图片主色调, 并不靠谱和视觉上仍有冲突
+    //主色取切成两块时,大的那块平均色
     <a href="https://blog.csdn.net/yuzi_lixiaoge/article/details/52781506">rgb 转 Lab</a>
     <a href="http://www.colormine.org/delta-e-calculator">颜色相似度计算</a>
     <a href="https://stackoverflow.com/questions/5392061/algorithm-to-check-similarity-of-colors">关于颜色相似的处理链接</a> 
   </pre>
   <input type="file">
+  <select name="count" id="count">
+    <option value="4" selected>4</option>
+    <option value="5">5</option>
+    <option value="6">6</option>
+    <option value="7">7</option>
+    <option value="8">8</option>
+    <option value="9">9</option>
+    <option value="10">10</option>
+    <option value="11">11</option>
+    <option value="12">12</option>
+    <option value="13">13</option>
+    <option value="14">14</option>
+    <option value="15">15</option>
+    <option value="16">16</option>
+  </select>
   <canvas width="300" height="200">如果看到这句话说明浏览器不支持canvas</canvas>
   <div class="result"></div>
   <script>
 
-    const count = 8
+    let count = 4
 
     let result = []
 
     let colors = []   //颜色
 
     const input = document.getElementsByTagName('input')[0]
+
+    const select = document.getElementById('count')
 
     const ctx = document.getElementsByTagName('canvas')[0].getContext('2d')
 
@@ -95,53 +118,38 @@ canvas {
         const pixels = getPixels()
         slicePixels(pixels) 
         repeatSlicePixels(result.length)
-        result.sort((a,b) => b.length - a.length) //降序
         // console.log(result)
+        result.sort((a,b) => b.length - a.length) //降序
+        const obj = {r:0,g:0,b:0}
         result.forEach(data => {
-          let accR = 0, accG = 0, accB = 0
-          let len = data.length
-          data.forEach(item => {
-            accR += item['r']
-            accG += item['g']
-            accB += item['b']
-          })
-          const r = Math.round(accR/len)
-          const g = Math.round(accG/len)
-          const b = Math.round(accB/len)
-          const bgColor = `rgb(${r},${g},${b})`
-          colors.push({
-            len,
-            lab: rgbToLab(r,g,b),      
-            rgb: [r,g,b],
-            index: 1         //表示累计,默认1
-          })
+          const bgColor = calColor(data)
           createDiv(bgColor)
         })
-        //将颜色转换成Lab,进行deltaE计算,差值目前决定在30之内
+        
+        //将颜色转换成Lab,进行deltaE计算,差值目前决定在20之内
         // console.log(colors)
-        combineColors()
-        const mainColor = getMainColor()
-        // createDiv(mainColor)
-        document.body.style.backgroundColor = mainColor
+        // combineColors()
+        // const mainColor = getMainColor()
+        // // createDiv(mainColor)
       }
       img.src = imgUrl
       resultDiv.appendChild(img)
     }
 
-    //获取主色调
+    //获取主色调 
     function getMainColor() {
       let max = 0, maxIndex = 0
       colors.forEach((color,index) => {
-        if(color['len'] > max) {
-          max = color['len']
+        if(color['index'] >= max) {
+          max = color['index']
           maxIndex = index
         }
       })
-      const r = colors[maxIndex]['rgb'][0]
-      const g = colors[maxIndex]['rgb'][1]
-      const b = colors[maxIndex]['rgb'][2]
-      const len = colors[maxIndex]['index']
-      return `rgb(${r/len},${g/len},${b/len},0.8)`
+      const len = colors[maxIndex]['index'] + 1
+      const r = colors[maxIndex]['rgb'][0] / len
+      const g = colors[maxIndex]['rgb'][1] / len
+      const b = colors[maxIndex]['rgb'][2] / len
+      return `rgb(${r},${g},${b})`
     }
 
     //合并颜色
@@ -239,7 +247,7 @@ canvas {
     }
 
     //切割像素
-    function slicePixels(pixels,tag) {
+    function slicePixels(pixels) {
       let rmax, rmin, gmax, gmin, bmax, bmin
       pixels.forEach(pixel => {
         const r = pixel['r']
@@ -267,10 +275,42 @@ canvas {
     //重复切割
     function repeatSlicePixels(len) {
       if(len < count) {
-        result.forEach(data => slicePixels(data)) //等价于for(let i = 0;i<len-1;i++)
-        result.splice(0,len)
+        // result.forEach(data => slicePixels(data)) //等价于for(let i = 0;i<len-1;i++)
+        // result.splice(0,len)
+        // repeatSlicePixels(result.length)
+        // 找到像素最多的那块切割
+        let max = 0, maxIndex
+        result.forEach((block,index) => {
+          // console.log(block.v,index)
+          if(block.length >= max) {
+            max = block.length
+            maxIndex = index
+          }
+        })
+        // console.log(maxIndex)
+        slicePixels(result[maxIndex])
+        if(len === 2) {
+          const mainColor = calColor(result[maxIndex],0.9)
+          document.body.style.backgroundColor = mainColor
+        }
+        result.splice(maxIndex,1)
         repeatSlicePixels(result.length)
       }
+    }
+
+    //计算平均颜色
+    function calColor(data,alpha = 1) {
+      let accR = 0, accG = 0, accB = 0
+      let len = data.length
+      data.forEach(item => {
+        accR += item['r']
+        accG += item['g']
+        accB += item['b']
+      })
+      const r = Math.round(accR/len)
+      const g = Math.round(accG/len)
+      const b = Math.round(accB/len)
+      return `rgb(${r},${g},${b},${alpha})`
     }
 
     //获取像素点
@@ -278,17 +318,21 @@ canvas {
       const { data } = ctx.getImageData(0,0,200,200)
       // const pixel = {r,g,b,a}
       const pixels = []
+      // const pixelObj = {}
       let r = 0, g = 0, b = 0
       for(let i = 0;i < data.length;i += 4) {
         const pixel = {}
         r += pixel['r'] = data[i]
         g += pixel['g'] = data[i+1]
         b += pixel['b'] = data[i+2]
-        // pixel['a'] = data[i+3]
         pixels.push(pixel)
       }
       const len = pixels.length
-      const bgColor = `rgb(${Math.round(r/len)},${Math.round(g/len)},${Math.round(b/len)})`
+      r = Math.round(r/len)
+      g = Math.round(g/len)
+      b = Math.round(b/len)
+      const bgColor = `rgb(${r},${g},${b})`
+
       createDiv(bgColor) //平均色
       return pixels
     }
@@ -322,8 +366,10 @@ canvas {
 	    return false
     }
 
-    input.onchange = function(e) {
-      const file = e.target.files[0]
+    //选择图片处理函数
+    function handleImgChange() {
+      const file = input.files[0]
+      if(!file) return    //取消选择
       if(isImg(file.name)) {
         if(imgUrl) {
           removeObjectURL()
@@ -334,6 +380,13 @@ canvas {
         imgUrl = getObjectURL(file)
         drawToCanvas()
       }
+    }
+
+    input.onchange = handleImgChange
+
+    select.onchange = function() {
+      count = Number(select.value)
+      if(imgUrl) handleImgChange()
     }
 
   </script>
