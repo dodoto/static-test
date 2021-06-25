@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>xyz</title>
+
+  <style>
+    #modal {
+      --offset: 100%;
+      position: fixed;
+      top: 0; right: 0; bottom: 0; left: 0;
+    }
+    #modal::before, #modal::after {
+      content: "";
+      display: block;
+      position: absolute;
+      top: 0; bottom: 0;
+      width: 50%;
+      transition: transform 0.3s ease;
+      background-size:cover;
+      background-repeat: no-repeat;
+    }
+    #modal::before {
+      left: 0;
+      background-color: skyblue;
+      transform: translateX(calc(-1 * var(--offset)));
+      background-image: url(_20210625162143.jpg);
+    }
+    #modal::after {
+      right: 0;
+      background-color: steelblue;
+      transform: translateX(calc(1 * var(--offset)));
+      background-image: url(_20210625162202.jpg);
+    }
+  </style>
+</head>
+<body>
+  <div id="modal"></div>
+  <script>
+
+    const modal = document.getElementById('modal')
+
+    document.addEventListener('mouseleave',function(e) {
+      modal.style.setProperty('--offset',0)
+    })
+
+    document.addEventListener('mouseenter',function(e) {
+      // console.log('enter')
+      modal.style.setProperty('--offset','100%')
+    })
+
+  </script>
+</body>
+</html>
