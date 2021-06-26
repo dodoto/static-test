@@ -58,12 +58,14 @@
       background-color: #FFF;
       position: absolute;
       /* transition: all 0.3s linear; */
+      transition-delay: 0.3s;
     }
     .form-content .title {
       position: relative;
       font-size: 23px;
       font-weight: 600;
       color: #333;
+      background-color: #FFF;
     }
     .form-content .title::before {
       content: '';
@@ -139,16 +141,22 @@
       transition: all 0.5s linear;
       /* transform: scale(1); */
       clip-path: circle(100% at 50% 50%);
+      transition-delay: 0s;
+      z-index: 9;
     }
     #signup:checked + .signup-form {
       transition: all 0.5s linear;
       /* transform: scale(1); */
       clip-path: circle(100% at 50% 50%);
+      transition-delay: 0s;
+      z-index: 9;
     }
     #reset:checked + .resetpassword-form {
       transition: all 0.5s linear;
       /* transform: scale(1); */
       clip-path: circle(100% at 50% 50%);
+      transition-delay: 0s;
+      z-index: 9;
     }
     input[type = "radio"] {
       display: none;
