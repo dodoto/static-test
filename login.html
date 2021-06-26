@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/5.15.3/css/all.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600;700&display=swap">
+  <title>Login</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: "Poppins", sans-serif;
+    }
+    :root {
+      --theme-color: #7D2AE8;
+    }
+    body {
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: var(--theme-color);
+      padding: 30px;
+      transition: all 0.3s ease;
+    }
+    .theme-selector {
+      position: fixed;
+      top: 0; left: 0;
+    }
+    .theme-selector select {
+      outline-width: 0;
+    }
+    .container {
+      height: 410px;
+      width: 100%;
+      min-width: 300px;
+      max-width: 450px;
+      background-color: #FFF;
+      padding: 40px 30px;
+      box-shadow: 0 5px 10px rgba(0,0,0,.2);
+    }
+    .container .form-content {
+      height: 100%;
+      width: 100%;
+      position: relative;
+    }
+    .form-content .login-form,
+    .form-content .signup-form,
+    .form-content .resetpassword-form {
+      /* transform: scale(0); */
+      clip-path: circle(0 at 50% 50%);
+      border-radius: 100%;
+      width: 100%;
+      height: 100%;
+      background-color: #FFF;
+      position: absolute;
+      /* transition: all 0.3s linear; */
+    }
+    .form-content .title {
+      position: relative;
+      font-size: 23px;
+      font-weight: 600;
+      color: #333;
+    }
+    .form-content .title::before {
+      content: '';
+      position: absolute;
+      left: 0; bottom: 0;
+      height: 3px; width: 24px;
+      background-color: var(--theme-color);
+    }
+    .form-content .signup-form .title::before {
+      width: 19px;
+    }
+    .form-content .resetpassword-form .title::before {
+      width: 29px;
+    }
+    .form-content .input-boxes {
+      margin-top: 30px;
+    }
+    .form-content .input-box {
+      display: flex;
+      align-items: center;
+      height: 50px;
+      width: 100%;
+      position: relative;
+    }
+    .form-content .input-box input {
+      height: 100%;
+      width: 100%;
+      outline-width: 0;
+      border-width: 0;
+      padding: 0 30px;
+      font-size: 16px;
+      font-weight: 500;
+      border-bottom: 2px solid rgba(0,0,0,.2);
+    }
+    .form-content .input-box input:focus,
+    .form-content .input-box input:valid {
+      border-color: var(--theme-color);
+    }
+    .form-content .input-box i {
+      position: absolute;
+      color: var(--theme-color);
+      font-size: 17px;
+    }
+    .form-content .button {
+      margin-top: 40px;
+    }
+    .form-content .button input {
+      color: #FFF;
+      background-color: var(--theme-color);
+      border-radius: 4px;
+      cursor: pointer;
+      padding: 0;
+      transition: all 0.3s ease;
+    }
+    .form-content .button input:hover {
+      opacity: 0.8;
+    }
+    .form-content .text {
+      font-size: 15px;
+      color: #333;
+    }
+    .form-content .text a:hover {
+      text-decoration: underline;
+    }
+    .form-content .text label {
+      cursor: pointer;
+      color: var(--theme-color);
+    }
+    .form-content .text label:hover {
+      text-decoration: underline;
+    }
+    #login:checked + .login-form {
+      transition: all 0.5s linear;
+      /* transform: scale(1); */
+      clip-path: circle(100% at 50% 50%);
+    }
+    #signup:checked + .signup-form {
+      transition: all 0.5s linear;
+      /* transform: scale(1); */
+      clip-path: circle(100% at 50% 50%);
+    }
+    #reset:checked + .resetpassword-form {
+      transition: all 0.5s linear;
+      /* transform: scale(1); */
+      clip-path: circle(100% at 50% 50%);
+    }
+    input[type = "radio"] {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="theme-selector">
+    选择主题色
+    <select>
+      <option value="#7D2AE8" style="background-color: #7D2AE8;" selected>#7D2AE8</option>
+      <option value="#009688" style="background-color: #009688;">#009688</option>
+      <option value="#2196F3" style="background-color: #2196F3;">#2196F3</option>
+      <option value="#FF5722" style="background-color: #FF5722;">#FF5722</option>
+      <option value="#3F51B5" style="background-color: #3F51B5;">#3F51B5</option>
+      <option value="#2C3E50" style="background-color: #2C3E50;">#2C3E50</option>
+    </select>
+  </div>
+  <div class="container">
+    <div class="form-content">
+      <input type="radio" name="form" value="login" id="login" checked>
+      <div class="login-form">
+        <div class="title">Login/登入</div>
+        <form action="#">
+          <div class="input-boxes">
+            <div class="input-box">
+              <i class="fas fa-envelope"></i>
+              <input type="text" placeholder="请输入你的邮箱" required>
+            </div>
+            <div class="input-box">
+              <i class="fas fa-lock"></i>
+              <input type="password" placeholder="请输入你的密码" required>
+            </div>
+            <div class="text"><label for="reset">忘记密码?</label></div>
+            <div class="button input-box">
+              <input type="submit" value="Submit">
+            </div>
+            <div class="text">
+              还没有账号?<label for="signup">去注册</label>
+            </div>
+          </div>
+        </form>
+      </div>
+      <input type="radio" name="form" value="signup" id="signup">
+      <div class="signup-form">
+        <div class="title">Signup/注册</div>
+        <form action="#">
+          <div class="input-boxes">
+            <div class="input-box">
+              <i class="fas fa-user"></i>
+              <input type="text" placeholder="请输入你的用户名" required>
+            </div>
+            <div class="input-box">
+              <i class="fas fa-envelope"></i>
+              <input type="text" placeholder="请输入你的邮箱" required>
+            </div>
+            <div class="input-box">
+              <i class="fas fa-lock"></i>
+              <input type="password" placeholder="请输入你的密码" required>
+            </div>
+            <div class="button input-box">
+              <input type="submit" value="Submit">
+            </div>
+            <div class="text">
+              已经有账号?<label for="login">去登入</label>
+            </div>
+          </div>
+        </form>
+      </div>
+      <input type="radio" name="form" value="reset" id="reset">
+      <div class="resetpassword-form">
+        <div class="title">Reset/重置密码</div>
+        <form action="#">
+          <div class="input-boxes">
+            <div class="input-box">
+              <i class="fas fa-envelope"></i>
+              <input type="text" placeholder="请输入你的邮箱" required>
+            </div>
+            <div class="input-box">
+              <i class="fas fa-lock"></i>
+              <input type="password" placeholder="请输入你的密码" required>
+            </div>
+            <div class="input-box">
+              <i class="fas fa-lock"></i>
+              <input type="password" placeholder="请再输入你的密码" required>
+            </div>
+            <div class="button input-box">
+              <input type="submit" value="Submit">
+            </div>
+            <div class="text">
+              已经设置好了?<label for="login">去登入</label>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  <script>
+    (function () {
+      const selector = document.getElementsByTagName('select')[0]
+      selector.onchange = function() {
+        document.children[0].style.setProperty("--theme-color",selector.value)
+      }
+    })()
+  </script>
+</body>
+</html>
