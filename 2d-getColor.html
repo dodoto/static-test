@@ -122,10 +122,9 @@
         result.sort((a,b) => b.length - a.length) //降序
         const obj = {r:0,g:0,b:0}
         result.forEach(data => {
-          const bgColor = calColor(data)
-          createDiv(bgColor)
+          const [r,g,b] = calColor(data)
+          createDiv(`rgb(${r},${g},${b})`)
         })
-        
         //将颜色转换成Lab,进行deltaE计算,差值目前决定在20之内
         // console.log(colors)
         // combineColors()
@@ -290,16 +289,42 @@
         // console.log(maxIndex)
         slicePixels(result[maxIndex])
         if(len === 2) {
-          const mainColor = calColor(result[maxIndex],0.9)
-          document.body.style.backgroundColor = mainColor
+          let [r,g,b] = calColor(result[maxIndex])
+          if(isDark(r,g,b)) {
+            r += 15
+            g += 15
+            b += 15
+          }
+          if(isLight(r,g,b)) {
+            r -= 15
+            g -= 15
+            b -= 15
+          }
+          document.body.style.backgroundColor = `rgba(${r},${g},${b},.9)`
         }
         result.splice(maxIndex,1)
         repeatSlicePixels(result.length)
       }
     }
 
+    //过黑 50
+    function isDark(r,g,b) {
+      if(r < 50 && g < 50 && b < 50) {
+        return true
+      }else{
+        return false
+      }
+    }
+    //过白
+    function isLight(r,g,b) {
+      if(r > 205 && g < 205 && b > 205) {
+        return true
+      }else{
+        return false
+      }
+    }
     //计算平均颜色
-    function calColor(data,alpha = 1) {
+    function calColor(data) {
       let accR = 0, accG = 0, accB = 0
       let len = data.length
       data.forEach(item => {
@@ -310,7 +335,7 @@
       const r = Math.round(accR/len)
       const g = Math.round(accG/len)
       const b = Math.round(accB/len)
-      return `rgb(${r},${g},${b},${alpha})`
+      return [r,g,b]
     }
 
     //获取像素点
