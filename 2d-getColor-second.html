@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="favicon.jpg">
+  <title>2d-getColor</title>
+  <style>
+    canvas {
+      width: 0px;
+    }
+    .result {
+      display: grid;
+      grid-template-columns: repeat(auto-fill,minmax(320px,1fr));
+      gap: 4px;
+    }
+    .result > img {
+      grid-row-start: 1;
+      grid-row-end: 10;
+    }
+    .result > div:nth-child(2)::before {
+      content: '这个是平均色↓';
+      display: block;
+      position: relative;
+      left: 0; top: -24px;
+    }
+  </style>
+</head>
+<body>
+  <h1>中位切割法获取图片颜色主要颜色</h1>
+  <pre>
+    使用中位切分法(将所有像素映射到三维坐标上(r,g,b))
+    获取图片所有像素  canvas 的 getImageData
+    计算边界 rmax gmax bmax rmin gmin bmin, 代表包裹像素分布区域的长宽高
+    从维度最大的轴来做中位切割
+    按照上述重复切割
+    //画入canvas是 200*200, 所以总像素为4w
+    <a href="https://blog.csdn.net/yuzi_lixiaoge/article/details/52781506">rgb 转 Lab</a>
+    <a href="http://www.colormine.org/delta-e-calculator">颜色相似度计算</a>
+    <a href="https://stackoverflow.com/questions/5392061/algorithm-to-check-similarity-of-colors">关于颜色相似的处理链接</a> 
+  </pre>
+  <input type="file">
+  <select name="count" id="count">
+    <option value="4" selected>4</option>
+    <option value="5">5</option>
+    <option value="6">6</option>
+    <option value="7">7</option>
+    <option value="8">8</option>
+    <option value="9">9</option>
+    <option value="10">10</option>
+    <option value="11">11</option>
+    <option value="12">12</option>
+    <option value="13">13</option>
+    <option value="14">14</option>
+    <option value="15">15</option>
+    <option value="16">16</option>
+  </select>
+  <canvas width="300" height="200">如果看到这句话说明浏览器不支持canvas</canvas>
+  <div class="result"></div>
+  <script>
+
+    let count = 4
+
+    let result = []
+
+    let colors = []   //颜色
+
+    let aveB = 0, aevR = 0, aveG = 0
+
+    const input = document.getElementsByTagName('input')[0]
+
+    const select = document.getElementById('count')
+
+    const ctx = document.getElementsByTagName('canvas')[0].getContext('2d')
+
+    const resultDiv = document.getElementsByTagName('div')[0]
+
+    let imgUrl
+
+    //清除选中的文件
+    function removeFile() {
+      input.outerHTML = input.outerHTML
+    }
+
+    //使用createObjectURl来获取图片地址(也可以使用FileReader)
+    function getObjectURL(file) {
+      let url = null ;
+      if (window.createObjectURL!=undefined) { // basic
+        url = window.createObjectURL(file) 
+      } else if (window.URL!=undefined) { // mozilla(firefox)
+        url = window.URL.createObjectURL(file) 
+      } else if (window.webkitURL!=undefined) { // webkit or chrome
+        url = window.webkitURL.createObjectURL(file) 
+      }
+	    return url 
+    }
+
+    //移除生成的图片地址
+    function removeObjectURL() {
+      if (window.revokeObjectURL!=undefined) { // basic
+        imgUrl = window.revokeObjectURL(imgUrl) 
+      } else if (window.URL!=undefined) { // mozilla(firefox)
+        imgUrl = window.URL.revokeObjectURL(imgUrl) 
+      } else if (window.webkitURL!=undefined) { // webkit or chrome
+        imgUrl = window.webkitURL.revokeObjectURL(imgUrl) 
+      }
+    }
+
+    //画到canvas里
+    function drawToCanvas() {
+      const img = new Image(320)
+      img.onload = function() {
+        ctx.drawImage(img,0,0,200,200)
+        const pixels = getPixels()
+
+        // let [r,g,b] = calColor(mainBlock)
+        // document.body.style.backgroundColor = `rgb(${r},${g},${b})`
+
+        slicePixels(pixels) 
+        repeatSlicePixels(result.length)
+        // console.log(result)
+        result.sort((a,b) => b.length - a.length) //降序
+        const obj = {r:0,g:0,b:0}
+        result.forEach(data => {
+          const [r,g,b] = calColor(data)
+          createDiv(`rgb(${r},${g},${b})`)
+        })
+        console.log(result)
+      }
+      img.src = imgUrl
+      resultDiv.appendChild(img)
+    }
+
+    //生成色块
+    function createDiv(bgColor) {
+      const div = document.createElement('div')
+      Object.assign(div.style,{
+        backgroundColor: bgColor,
+        height: '50px',
+      })
+      resultDiv.appendChild(div)
+    }
+
+    //切割像素
+    function slicePixels(pixels) {
+      let rmax, rmin, gmax, gmin, bmax, bmin
+      pixels.forEach(pixel => {
+        const r = pixel['r']
+        const g = pixel['g']
+        const b = pixel['b']
+        rmax = getMaxBoundary(rmax,r)
+        rmin = getMinBoundary(rmin,r)
+        gmax = getMaxBoundary(gmax,g) 
+        gmin = getMinBoundary(gmin,g)
+        bmax = getMaxBoundary(bmax,b) 
+        bmin = getMinBoundary(bmin,b)
+      })
+      const median = getMedian(rmax,rmin,gmax,gmin,bmax,bmin)
+      // console.log(median)
+      const block1 = [], block2 = []
+      pixels.forEach(pixel => {
+        if(pixel[median['key']] > median['value']) {
+          block1.push(pixel)
+        }else{
+          block2.push(pixel)
+        }
+      })
+      result.push(block1,block2)
+      // const middle = pixels.length / 2
+      // result.push(pixels.slice(0,middle),pixels.slice(middle))
+    } 
+
+    //重复切割
+    function repeatSlicePixels(len) {
+      if(len < count) {
+        // result.forEach(data => slicePixels(data)) //等价于for(let i = 0;i<len-1;i++)
+        // result.splice(0,len)
+        // repeatSlicePixels(result.length)
+        // rank  = volumn * pixelCount
+        // 找到rank最大的那块切割
+        let diff = 0, maxIndex = 0
+        result.forEach((block,index) => {
+          let rmax, rmin, gmax, gmin, bmax, bmin
+          block.forEach(item => {
+            const r = item['r']
+            const g = item['g']
+            const b = item['b']
+            rmax = getMaxBoundary(rmax,r)
+            rmin = getMinBoundary(rmin,r)
+            gmax = getMaxBoundary(gmax,g) 
+            gmin = getMinBoundary(gmin,g)
+            bmax = getMaxBoundary(bmax,b) 
+            bmin = getMinBoundary(bmin,b)
+          })
+          const volumn = (rmax - rmin) * (gmax - gmin) * (bmax - bmin)
+          if(volumn * block.length > diff) {
+            diff = block.length * volumn
+            maxIndex = index
+          }
+          // console.log(index,volumn * block.length)
+        })
+
+        // let max = 0, maxIndex
+        // result.forEach((block,index) => {
+        //   // console.log(block.v,index)
+        //   if(block.length >= max) {
+        //     max = block.length
+        //     maxIndex = index
+        //   }
+        // })
+        // console.log(maxIndex)
+        slicePixels(result[maxIndex])
+        if(len === 2) {
+          let index = 0
+          if(result[0].length < result[1].length) index = 1
+
+          let rmax, rmin, gmax, gmin, bmax, bmin
+          result[index].forEach(pixel => {
+            const r = pixel['r']
+            const g = pixel['g']
+            const b = pixel['b']
+            rmax = getMaxBoundary(rmax,r)
+            rmin = getMinBoundary(rmin,r)
+            gmax = getMaxBoundary(gmax,g) 
+            gmin = getMinBoundary(gmin,g)
+            bmax = getMaxBoundary(bmax,b) 
+            bmin = getMinBoundary(bmin,b)
+          })
+          console.log(rmax,rmin,gmax,gmin,bmax,bmin)
+          const median = getMedian(rmax,rmin,gmax,gmin,bmax,bmin)
+          console.log(median)
+
+          let [r,g,b] = calColor(result[index])
+          
+          let diff = 0, key = median['key'], value = median['value']
+          let middleR = 0, middleG = 0, middleB = 0
+          if(key === 'r') {
+            diff = r - value
+            middleR = value
+            middleB = b - diff
+            middleG = g - diff
+            // document.body.style.backgroundColor = `rgb(${(value+r)/2},${(g-diff+g)/2},${(b-diff+b)/2})`
+          }
+          if(key === 'g') {
+            diff = g - value
+            middleR = r - diff
+            middleB = b - diff
+            middleG = value
+            // document.body.style.backgroundColor = `rgb(${(r-diff+r)/2},${(g+value)/2},${(b+b-diff)/2})`
+          }
+          if(key === 'b') {
+            diff = b - value
+            middleR = r - diff
+            middleB = value
+            middleG = g - diff
+            // document.body.style.backgroundColor = `rgb(${(r-diff+r)/2},${(g+g-diff)/2},${(b+value)/2})`
+          }
+          document.body.style.backgroundColor = `rgb(${(aveR+r+middleR)/3},${(aveG+g+middleG)/3},${(aveB+b+middleB)/3})` 
+        }
+        result.splice(maxIndex,1)
+        repeatSlicePixels(result.length)
+      }
+    }
+
+    //计算平均颜色
+    function calColor(data) {
+      let accR = 0, accG = 0, accB = 0
+      let len = data.length
+      data.forEach(item => {
+        accR += item['r']
+        accG += item['g']
+        accB += item['b']
+      })
+      const r = Math.round(accR/len)
+      const g = Math.round(accG/len)
+      const b = Math.round(accB/len)
+      return [r,g,b]
+    }
+
+    //获取像素点
+    function getPixels() {
+      const { data } = ctx.getImageData(0,0,200,200)
+      // const pixel = {r,g,b,a}
+      const pixels = []
+      // const pixelObj = {}
+      let r = 0, g = 0, b = 0
+      for(let i = 0;i < data.length;i += 4) {
+        const pixel = {}
+        r += pixel['r'] = data[i]
+        g += pixel['g'] = data[i+1]
+        b += pixel['b'] = data[i+2]
+        let isIn = false
+        pixels.push(pixel)
+      }
+      const len = pixels.length
+      aveR = r = Math.round(r/len)
+      aveG = g = Math.round(g/len)
+      aveB = b = Math.round(b/len)
+      const bgColor = `rgb(${r},${g},${b})`
+      createDiv(bgColor) //平均色
+      return pixels
+    }
+
+    //获取边界(最大最小rgb)
+    function getMaxBoundary(max,diff) {
+      if(max === undefined) return diff
+      return Math.max(max,diff)
+    }
+    function getMinBoundary(min,diff) {
+      if(min === undefined) return diff
+      return Math.min(min,diff)
+    }
+
+    //获取中位线
+    function getMedian(rmax,rmin,gmax,gmin,bmax,bmin) {
+      const r = rmax - rmin
+      const g = gmax - gmin
+      const b = bmax - bmin
+      const max = Math.max(r,g,b)
+      if(r === max) return {key:'r',value:(rmax + rmin)/2}
+      if(g === max) return {key:'g',value:(gmax + gmin)/2}
+      if(b === max) return {key:'b',value:(bmax + bmin)/2}
+    }
+
+    //判断是否图片
+    function isImg(fileName) {
+      const pattern = /\.(jpg|jpeg|png|GIF|JPG|PNG)$/
+      if (pattern.test(fileName) ) return  true
+      alert('请选择图片文件')
+	    return false
+    }
+
+    //选择图片处理函数
+    function handleImgChange() {
+      const file = input.files[0]
+      if(!file) return    //取消选择
+      if(isImg(file.name)) {
+        if(imgUrl) {
+          removeObjectURL()
+          result = []
+          colors = []
+          resultDiv.innerHTML = ''
+        }
+        imgUrl = getObjectURL(file)
+        drawToCanvas()
+      }
+    }
+
+    input.onchange = handleImgChange
+
+    select.onchange = function() {
+      count = Number(select.value)
+      if(imgUrl) handleImgChange()
+    }
+
+  </script>
+</body>
+</html>
