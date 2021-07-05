@@ -35,12 +35,7 @@
     计算边界 rmax gmax bmax rmin gmin bmin, 代表包裹像素分布区域的长宽高
     从维度最大的轴来做中位切割
     按照上述重复切割
-    //按色块所包含像素数量从大到小排
     //画入canvas是 200*200, 所以总像素为4w
-    //色块数量按 2 4 8 16 来, 目前默认为8, 修改为不切割所有色块,选择当前像素量最大的块切割,一直到数量满足要求
-    计算所有色块的平均值作为当前色块的代表色
-    //最后,将结果色块从rgb转为Lab,计算差值,差值小于40定义为相似颜色,合并颜色,获取到图片主色调, 并不靠谱和视觉上仍有冲突
-    //主色取切成两块时,大的那块平均色
     <a href="https://blog.csdn.net/yuzi_lixiaoge/article/details/52781506">rgb 转 Lab</a>
     <a href="http://www.colormine.org/delta-e-calculator">颜色相似度计算</a>
     <a href="https://stackoverflow.com/questions/5392061/algorithm-to-check-similarity-of-colors">关于颜色相似的处理链接</a> 
@@ -116,6 +111,10 @@
       img.onload = function() {
         ctx.drawImage(img,0,0,200,200)
         const pixels = getPixels()
+
+        // let [r,g,b] = calColor(mainBlock)
+        // document.body.style.backgroundColor = `rgb(${r},${g},${b})`
+
         slicePixels(pixels) 
         repeatSlicePixels(result.length)
         // console.log(result)
@@ -125,114 +124,10 @@
           const [r,g,b] = calColor(data)
           createDiv(`rgb(${r},${g},${b})`)
         })
-        //将颜色转换成Lab,进行deltaE计算,差值目前决定在20之内
-        // console.log(colors)
-        // combineColors()
-        // const mainColor = getMainColor()
-        // // createDiv(mainColor)
+        console.log(result)
       }
       img.src = imgUrl
       resultDiv.appendChild(img)
-    }
-
-    //获取主色调 
-    function getMainColor() {
-      let max = 0, maxIndex = 0
-      colors.forEach((color,index) => {
-        if(color['index'] >= max) {
-          max = color['index']
-          maxIndex = index
-        }
-      })
-      const len = colors[maxIndex]['index'] + 1
-      const r = colors[maxIndex]['rgb'][0] / len
-      const g = colors[maxIndex]['rgb'][1] / len
-      const b = colors[maxIndex]['rgb'][2] / len
-      return `rgb(${r},${g},${b})`
-    }
-
-    //合并颜色
-    function combineColors() {
-      for(let i = 0;i < colors.length;i++) {
-        for(let j = i + 1;j < colors.length;j++) {
-          const diff = deltaE(colors[i]['lab'],colors[j]['lab'])
-          if(diff <= 40) {
-            colors[i]['len'] += colors[j]['len']
-            colors[i]['rgb'][0] += colors[j]['rgb'][0]
-            colors[i]['rgb'][1] += colors[j]['rgb'][1]
-            colors[i]['rgb'][2] += colors[j]['rgb'][2]
-            colors[i]['index']++
-            colors.splice(j,1)
-          }
-        }
-      }
-    }
-
-    //deltaE
-    function deltaE(color1,color2) {
-      // (l2-l1)
-      const l = Math.pow(color2[0] - color1[0],2)
-      const a = Math.pow(color2[1] - color1[1],2)
-      const b = Math.pow(color2[2] - color1[1],2)
-      return Math.sqrt(l + a + b)
-    }
-
-    //rgb 转 Lab
-    function rgbToLab(r, g, b) {
-      r /= 255, g /= 255, b /= 255;
-      if ( r > 0.04045 ){
-			  r = Math.pow(( r + 0.055 ) / 1.055, 2.4);
-      } else {
-        r = r / 12.92;
-      }
-      if ( g > 0.04045 ){
-        g = Math.pow(( g + 0.055 ) / 1.055, 2.4);
-      } else {
-        g = g / 12.92;
-      }
-      if ( b > 0.04045 ){
-        b = Math.pow(( b + 0.055 ) / 1.055, 2.4);
-      } else {
-        b = b / 12.92;
-      }
-      // sRGB
-      let X = r * 0.436052025 + g * 0.385081593 + b * 0.143087414;
-      let Y = r * 0.222491598 + g * 0.716886060 + b * 0.060621486;
-      let Z = r * 0.013929122 + g * 0.097097002 + b * 0.714185470;
-      // XYZ range: 0~100
-      X = X * 100.000;
-      Y = Y * 100.000;
-      Z = Z * 100.000;
-      // Reference White Point
-      let ref_X = 96.4221;
-      let ref_Y = 100.000;
-      let ref_Z = 82.5211;
-      X = X / ref_X;
-      Y = Y / ref_Y;
-      Z = Z / ref_Z;
-      // Lab
-      if (X > 0.008856){
-        X = Math.pow(X, 1/3.000);
-      } else {
-        X = ( 7.787 * X ) + ( 16 / 116.000 );
-      }
-      if (Y > 0.008856){
-        Y = Math.pow(Y, 1/3.000);
-      } else {
-        Y = ( 7.787 * Y ) + ( 16 / 116.000 );
-      }
-      if (Z > 0.008856){
-        Z = Math.pow(Z, 1/3.000);
-      } else {
-        Z = ( 7.787 * Z ) + ( 16 / 116.000 );
-      }
-  
-      let lab_L = ( 116.000 * Y ) - 16.000;
-      let lab_A = 500.000 * ( X - Y );
-      let lab_B = 200.000 * ( Y - Z );
-  
-      return [lab_L, lab_A , lab_B];
-
     }
 
     //生成色块
@@ -260,16 +155,19 @@
         bmin = getMinBoundary(bmin,b)
       })
       const median = getMedian(rmax,rmin,gmax,gmin,bmax,bmin)
+      console.log(median)
       const block1 = [], block2 = []
       pixels.forEach(pixel => {
-        if(pixel[median['key']] >= median['value']) {
+        if(pixel[median['key']] > median['value']) {
           block1.push(pixel)
         }else{
           block2.push(pixel)
         }
       })
       result.push(block1,block2)
-    }
+      // const middle = pixels.length / 2
+      // result.push(pixels.slice(0,middle),pixels.slice(middle))
+    } 
 
     //重复切割
     function repeatSlicePixels(len) {
@@ -277,7 +175,27 @@
         // result.forEach(data => slicePixels(data)) //等价于for(let i = 0;i<len-1;i++)
         // result.splice(0,len)
         // repeatSlicePixels(result.length)
-        // 找到像素最多的那块切割
+        // 找到密度最大的那块切割
+        // let dest = 0, maxIndex = 0
+        // result.forEach((block,index) => {
+        //   let rmax, rmin, gmax, gmin, bmax, bmin
+        //   block.forEach(item => {
+        //     const r = item['r']
+        //     const g = item['g']
+        //     const b = item['b']
+        //     rmax = getMaxBoundary(rmax,r)
+        //     rmin = getMinBoundary(rmin,r)
+        //     gmax = getMaxBoundary(gmax,g) 
+        //     gmin = getMinBoundary(gmin,g)
+        //     bmax = getMaxBoundary(bmax,b) 
+        //     bmin = getMinBoundary(bmin,b)
+        //   })
+        //   const volumn = (rmax - rmin) * (gmax - gmin) * (bmax - bmin)
+        //   if(block.length / volumn > dest) {
+        //     dest = block.length / volumn
+        //     maxIndex = index
+        //   }
+        // })
         let max = 0, maxIndex
         result.forEach((block,index) => {
           // console.log(block.v,index)
@@ -290,16 +208,6 @@
         slicePixels(result[maxIndex])
         if(len === 2) {
           let [r,g,b] = calColor(result[maxIndex])
-          if(isDark(r,g,b)) {
-            r += 15
-            g += 15
-            b += 15
-          }
-          if(isLight(r,g,b)) {
-            r -= 15
-            g -= 15
-            b -= 15
-          }
           document.body.style.backgroundColor = `rgba(${r},${g},${b},.9)`
         }
         result.splice(maxIndex,1)
@@ -307,22 +215,6 @@
       }
     }
 
-    //过黑 50
-    function isDark(r,g,b) {
-      if(r < 50 && g < 50 && b < 50) {
-        return true
-      }else{
-        return false
-      }
-    }
-    //过白
-    function isLight(r,g,b) {
-      if(r > 205 && g < 205 && b > 205) {
-        return true
-      }else{
-        return false
-      }
-    }
     //计算平均颜色
     function calColor(data) {
       let accR = 0, accG = 0, accB = 0
@@ -350,6 +242,7 @@
         r += pixel['r'] = data[i]
         g += pixel['g'] = data[i+1]
         b += pixel['b'] = data[i+2]
+        let isIn = false
         pixels.push(pixel)
       }
       const len = pixels.length
@@ -359,6 +252,7 @@
       const bgColor = `rgb(${r},${g},${b})`
 
       createDiv(bgColor) //平均色
+      console.log(pixels.length)
       return pixels
     }
 
