@@ -60,6 +60,8 @@
   <div class="result"></div>
   <script>
 
+    let aveR = 0, aveG = 0, aveB = 0
+
     let count = 4
 
     let result = []
@@ -175,40 +177,47 @@
         // result.forEach(data => slicePixels(data)) //等价于for(let i = 0;i<len-1;i++)
         // result.splice(0,len)
         // repeatSlicePixels(result.length)
-        // 找到密度最大的那块切割
-        // let dest = 0, maxIndex = 0
+        // rank  = volumn * pixelCount
+        // 找到rank最大的那块切割
+        let diff = 0, maxIndex = 0
+        result.forEach((block,index) => {
+          let rmax, rmin, gmax, gmin, bmax, bmin
+          block.forEach(item => {
+            const r = item['r']
+            const g = item['g']
+            const b = item['b']
+            rmax = getMaxBoundary(rmax,r)
+            rmin = getMinBoundary(rmin,r)
+            gmax = getMaxBoundary(gmax,g) 
+            gmin = getMinBoundary(gmin,g)
+            bmax = getMaxBoundary(bmax,b) 
+            bmin = getMinBoundary(bmin,b)
+          })
+          const volumn = (rmax - rmin) * (gmax - gmin) * (bmax - bmin)
+          if(volumn * block.length > diff) {
+            diff = block.length * volumn
+            maxIndex = index
+          }
+          // console.log(index,volumn * block.length)
+        })
+
+        // let max = 0, maxIndex
         // result.forEach((block,index) => {
-        //   let rmax, rmin, gmax, gmin, bmax, bmin
-        //   block.forEach(item => {
-        //     const r = item['r']
-        //     const g = item['g']
-        //     const b = item['b']
-        //     rmax = getMaxBoundary(rmax,r)
-        //     rmin = getMinBoundary(rmin,r)
-        //     gmax = getMaxBoundary(gmax,g) 
-        //     gmin = getMinBoundary(gmin,g)
-        //     bmax = getMaxBoundary(bmax,b) 
-        //     bmin = getMinBoundary(bmin,b)
-        //   })
-        //   const volumn = (rmax - rmin) * (gmax - gmin) * (bmax - bmin)
-        //   if(block.length / volumn > dest) {
-        //     dest = block.length / volumn
+        //   // console.log(block.v,index)
+        //   if(block.length >= max) {
+        //     max = block.length
         //     maxIndex = index
         //   }
         // })
-        let max = 0, maxIndex
-        result.forEach((block,index) => {
-          // console.log(block.v,index)
-          if(block.length >= max) {
-            max = block.length
-            maxIndex = index
-          }
-        })
         // console.log(maxIndex)
         slicePixels(result[maxIndex])
+        //r g b + 2 提升亮度
         if(len === 2) {
-          let [r,g,b] = calColor(result[maxIndex])
-          document.body.style.backgroundColor = `rgba(${r},${g},${b},.9)`
+          // result.sort((a,b) => b.length - a.length)
+          let index = 0
+          if(result[0].length < result[1].length) index = 1
+          let [r,g,b] = calColor(result[index])
+          document.body.style.backgroundColor = `rgb(${(r+aveR)/2},${(g+aveG)/2},${(b+aveB)/2})`
         }
         result.splice(maxIndex,1)
         repeatSlicePixels(result.length)
@@ -246,13 +255,11 @@
         pixels.push(pixel)
       }
       const len = pixels.length
-      r = Math.round(r/len)
-      g = Math.round(g/len)
-      b = Math.round(b/len)
+      aveR = r = Math.round(r/len)
+      aveG = g = Math.round(g/len)
+      aveB = b = Math.round(b/len)
       const bgColor = `rgb(${r},${g},${b})`
-
       createDiv(bgColor) //平均色
-      console.log(pixels.length)
       return pixels
     }
 
