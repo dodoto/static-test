@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>canvas move</title>
+  <style>
+    #canva {
+      width: 800px;
+      height: 500px;
+      box-shadow: 2px 2px 6px rgba(0,0,0,.2);
+    }
+  </style>
+</head>
+<body>
+  <canvas id="canva">your browser doesn't support canvas</canvas>
+  <script>
+    const canvas = document.getElementById('canva')
+    const context = canvas.getContext('2d')
+    canvas.width = 800
+    canvas.height = 500
+  </script>
+  <script>
+    function Ball({
+      x,
+      y,
+      bg,
+      radius
+    }) {
+      this.x = x
+      this.y = y
+      this.v = 1
+      this.bg = bg
+      this.radius = radius
+      this.dirX = this.dirY = 1
+      this.render = function(ctx) {
+        const { x, y, radius, bg } = this
+        ctx.beginPath()
+        ctx.arc(x,y,radius,0,Math.PI*2)
+        ctx.fillStyle = bg
+        ctx.fill()
+      }
+    }
+
+    const ballList = []
+    //速度过快>2会有叠加现象
+    ballList.push(new Ball({x:50,y:50,bg:'skyblue',radius:50}))
+    ballList.push(new Ball({x:500,y:50,bg:'pink',radius:50}))
+    ballList.push(new Ball({x:50,y:450,bg:'greenyellow',radius:50}))
+    ballList.push(new Ball({x:750,y:450,bg:'orange',radius:50}))
+
+    function checkIsBoundary(ball) {
+      if(ball.x + ball.radius >= canvas.width) ball.dirX = -1
+      if(ball.x - ball.radius <= 0) ball.dirX = 1
+      if(ball.y + ball.radius >= canvas.height) ball.dirY = -1
+      if(ball.y - ball.radius <= 0) ball.dirY = 1
+      ball.x += (ball.v * ball.dirX)
+      ball.y += (ball.v * ball.dirY) 
+    }
+
+    function isKnock(ball1,ball2) {
+      const dx = ball1.x-ball2.x
+      const dy = ball1.y-ball2.y
+      const distance = Math.sqrt(dx*dx+dy*dy)
+      return distance <= (ball1.radius + ball2.radius)
+    }
+
+    function checkIsKnock(self) {
+      ballList.forEach(ball => {  
+        if(ball !== self) {
+          const is = isKnock(self,ball)
+          if(is) {
+            if(ball.dirX !== self.dirX) {
+              self.dirX = -1 * self.dirX
+              ball.dirX = -1 * ball.dirX
+            }
+            if(ball.dirY !== self.dirY) {
+              self.dirY = -1 * self.dirY
+              ball.dirY = -1 * ball.dirY
+            }
+            if(ball.x === self.x) {
+              self.dirY = -1 * self.dirY
+              ball.dirY = -1 * ball.dirY
+            } 
+            if(ball.y === self.y) {
+              self.dirX = -1 * self.dirX
+              ball.dirX = -1 * ball.dirX
+            }
+          }
+        }
+      })
+    }
+
+    function loop() {
+      context.clearRect(0,0,800,500)
+      ballList.forEach(ball => {
+        checkIsKnock(ball)
+        checkIsBoundary(ball)
+        ball.render(context)
+      })
+      requestAnimationFrame(loop)
+    }
+
+    requestAnimationFrame(loop)
+  </script>
+</body>
+</html>
