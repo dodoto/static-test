@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>svg</title>
+  <style>
+    :root {
+      --success-dashoffset: 252;
+      --failed-dashoffset: 252;
+    }
+    #success {
+      stroke-dashoffset: var(--success-dashoffset);
+      transition: all 3s;
+    }
+    #failed1 {
+      stroke-dashoffset: var(--failed-dashoffset);
+      transition: all 3s;
+    }
+    #failed2 {
+      stroke-dashoffset: var(--failed-dashoffset);
+      transition: all 3s 0.5s;
+    }
+  </style>
+</head>
+<body>
+  <svg
+    version="1.1"
+    baseProfile="full"
+    width="150"
+    height="100"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+  <!--   -->
+    <g  stroke-width="7" fill="none">
+      <circle cx="75" cy="50" r="40" stroke="#409EFF"   stroke-dashoffset="0" stroke-dasharray="252 252">
+        <animate attributeType="CSS" attributeName="stroke-dashoffset" dur="3s" values="504;0" repeatCount="indefinite" id="loading"/>
+      </circle>
+      <polyline points="45 45, 70 70, 100 30" stroke-dashoffset="252" stroke-dasharray="252 252" id="success" stroke="#67C23A">
+        <!-- <animate attributeType="CSS" attributeName="stroke-dashoffset" dur="3s" values="252;0" repeatCount="1" /> -->
+      </polyline>
+      <line x1="55" x2="95" y1="30" y2="70" stroke-dashoffset="252" stroke-dasharray="252 252" id="failed1" stroke="#F56C6C">
+        <!-- <animate attributeType="CSS" attributeName="stroke-dashoffset" dur="3s" values="252;0" repeatCount="1" /> -->
+      </line>
+      <line x1="95" x2="55" y1="30" y2="70" stroke-dashoffset="252" stroke-dasharray="252 252" id="failed2" stroke="#F56C6C">
+        <!-- <animate attributeType="CSS" attributeName="stroke-dashoffset" dur="3s" values="252;0" repeatCount="1" /> -->
+      </line>
+    </g>
+  </svg>
+  <button id="btn-f">click to failed</button>
+  <button id="btn-s">click to success</button>
+  <script>
+    const loadingSvg = document.getElementById('loading');
+    const successSvg = document.getElementById('success');
+    const failed1Svg = document.getElementById('failed1');
+    const failed2Svg = document.getElementById('failed2');
+    const failedBtn = document.getElementById('btn-f');
+    const successBtn = document.getElementById('btn-s');
+    function handleBtnClick(type,color) {
+      loadingSvg.setAttribute('dur','0s');
+      loadingSvg.targetElement.setAttribute('stroke',color);
+      document.children[0].style.setProperty(`--${type}-dashoffset`,0);
+    }
+    failedBtn.onclick = function() {
+      handleBtnClick('failed','#F56C6C');
+    }
+    successBtn.onclick = function() {
+      handleBtnClick('success','#67C23A');
+    }
+  </script>
+</body>
+</html>
