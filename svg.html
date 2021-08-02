@@ -12,15 +12,15 @@
     }
     #success {
       stroke-dashoffset: var(--success-dashoffset);
-      transition: all 3s;
+      transition: all 2s;
     }
     #failed1 {
       stroke-dashoffset: var(--failed-dashoffset);
-      transition: all 3s;
+      transition: all 2s;
     }
     #failed2 {
       stroke-dashoffset: var(--failed-dashoffset);
-      transition: all 3s 0.5s;
+      transition: all 2s 0.5s;
     }
   </style>
 </head>
@@ -32,41 +32,41 @@
     height="100"
     xmlns="http://www.w3.org/2000/svg"
   >
-  <!--   -->
     <g  stroke-width="7" fill="none">
-      <circle cx="75" cy="50" r="40" stroke="#409EFF"   stroke-dashoffset="0" stroke-dasharray="252 252">
-        <animate attributeType="CSS" attributeName="stroke-dashoffset" dur="3s" values="504;0" repeatCount="indefinite" id="loading"/>
+      <circle cx="75" cy="50" r="40" stroke="#409EFF" fill="#409EFF" stroke-dashoffset="0" stroke-dasharray="252 252">
+        <animate attributeType="CSS" attributeName="stroke-dashoffset" dur="3s" values="504;0" repeatCount="indefinite" id="outer-loading"/>
       </circle>
-      <polyline points="45 45, 70 70, 100 30" stroke-dashoffset="252" stroke-dasharray="252 252" id="success" stroke="#67C23A">
-        <!-- <animate attributeType="CSS" attributeName="stroke-dashoffset" dur="3s" values="252;0" repeatCount="1" /> -->
-      </polyline>
-      <line x1="55" x2="95" y1="30" y2="70" stroke-dashoffset="252" stroke-dasharray="252 252" id="failed1" stroke="#F56C6C">
-        <!-- <animate attributeType="CSS" attributeName="stroke-dashoffset" dur="3s" values="252;0" repeatCount="1" /> -->
-      </line>
-      <line x1="95" x2="55" y1="30" y2="70" stroke-dashoffset="252" stroke-dasharray="252 252" id="failed2" stroke="#F56C6C">
-        <!-- <animate attributeType="CSS" attributeName="stroke-dashoffset" dur="3s" values="252;0" repeatCount="1" /> -->
-      </line>
+      <circle cx="75" cy="50" r="40" fill="white">
+        <animate attributeType="CSS" attributeName="r" dur="1s" values="40;33;40" repeatCount="indefinite" id="inner-loading"/>
+      </circle>
+      <polyline points="45 45, 70 70, 100 30" stroke-dashoffset="252" stroke-dasharray="252 252"  id="success" stroke="white" />
+      <line x1="55" x2="95" y1="30" y2="70" stroke-dashoffset="252" stroke-dasharray="252 252"  id="failed1" stroke="white" />
+      <line x1="95" x2="55" y1="30" y2="70" stroke-dashoffset="252" stroke-dasharray="252 252"  id="failed2" stroke="white" />
     </g>
   </svg>
   <button id="btn-f">click to failed</button>
   <button id="btn-s">click to success</button>
   <script>
-    const loadingSvg = document.getElementById('loading');
+    const outerLoadingSvg = document.getElementById('outer-loading');
+    const innerLoadingSvg = document.getElementById('inner-loading');
     const successSvg = document.getElementById('success');
     const failed1Svg = document.getElementById('failed1');
     const failed2Svg = document.getElementById('failed2');
     const failedBtn = document.getElementById('btn-f');
     const successBtn = document.getElementById('btn-s');
     function handleBtnClick(type,color) {
-      loadingSvg.setAttribute('dur','0s');
-      loadingSvg.targetElement.setAttribute('stroke',color);
+      outerLoadingSvg.setAttribute('dur','0s');
+      innerLoadingSvg.setAttribute('dur','0s');
+      outerLoadingSvg.targetElement.setAttribute('stroke',color);
+      innerLoadingSvg.targetElement.setAttribute('stroke',color);
+      innerLoadingSvg.targetElement.setAttribute('fill',color);
       document.children[0].style.setProperty(`--${type}-dashoffset`,0);
     }
     failedBtn.onclick = function() {
       handleBtnClick('failed','#F56C6C');
     }
     successBtn.onclick = function() {
-      handleBtnClick('success','#67C23A');
+      handleBtnClick('success','#409EFF');
     }
   </script>
 </body>
