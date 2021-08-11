@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>弹幕</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    #container {
+      height: 100vh;
+      background-color: #9295b8;
+      position: relative;
+      overflow: hidden;
+    }
+    .danmu {
+      position: absolute;
+      top: 0; 
+      /* left: 100%; */
+      color: white;
+      background-color: rgba(0,0,0,.2);
+      font-size: 16px;
+      font-weight: 700;
+      padding: 10px 15px;
+      border-radius: 50px;
+      white-space: nowrap;
+    }
+  </style>
+</head>
+<body>
+  <div id="container">
+
+  </div>
+  <noscript>
+    同速不同时
+  </noscript>
+  <script>
+    //danmu
+    function Danmu(text) {
+
+      if(!text || (typeof text !== 'string')) {
+        throw new Error('container must be string and required')
+        return
+      }
+
+      const span = document.createElement('div')
+      span.classList.add('danmu')
+      span.innerText = text
+
+      this.node = span                 //弹幕DOM
+      this.width = 0                   //自身宽度
+      this.text = text                 //弹幕文本
+      this.rendered = false            //是否已经渲染
+      this.distance = 0                //移动的距离
+      this.velocity = 0                //移动的速度
+      this.duration = 0                //移动的时间
+
+      //渲染弹幕
+      this.render = function(container,top,containerWidth,velocity,trackHeight) {
+        this.rendered = true
+        // console.log(this.node)
+        this.node.style.transform = `translateX(${containerWidth}px)`
+        container.appendChild(this.node)
+        //计算 duration, 距离, top  
+        const { width, height, right } = this.node.getBoundingClientRect()
+
+        //使用 left: 100vh 或 100% 随着容器大小变化新建的弹幕可能不是从最右边开始
+        // if(right < containerWidth) {
+        //   console.log('浏览器渲染的问题',this.node)
+        // }
+
+        this.velocity = velocity
+
+        this.distance = containerWidth + width
+
+        this.width = width
+
+        this.duration = this.distance / this.velocity
+
+        top = (trackHeight - height) / 2 + top 
+
+
+        Object.assign(this.node.style,{
+          top: `${top}px`,
+          transform: `translateX(${-width}px)`,
+          transition: `transform ${this.duration}s linear`
+        })
+
+
+        //过渡结束移除
+        const danmu = this
+        this.node.addEventListener('transitionend',function() {
+          // console.log(this.getBoundingClientRect().right)
+          danmu.remove(container)
+          if(danmu.handleEnd && danmu.handleEnd instanceof Function) danmu.handleEnd()
+        })  
+        this.node.onclick = function () {
+          console.log(danmu)
+        }
+      }
+
+      //移除弹幕
+      this.remove = function(container) {
+        container.removeChild(this.node)
+      }
+
+      //移动结束处理函数
+      this.handleEnd = null
+
+      //resize处理函数
+      this.resize = function(velocity) {
+        //重新计算过渡时间
+        //容器变小时间变慢
+        //容器变大时间变快
+        const { right, left, width } = this.node.getBoundingClientRect()
+        this.velocity = velocity
+        const duration = this.duration = right / velocity
+        Object.assign(this.node.style,{
+          transform: `translateX(${left}px)`,
+          transition: 'transform 0s linear'
+        })
+        requestAnimationFrame(() => {
+          Object.assign(this.node.style,{
+            transform: `translateX(${-width}px)`,
+            transition: `transform ${duration}s linear`
+          })
+        })
+      }
+
+    }
+  </script>
+  <script>
+    //track
+    function TrackManager(containerHeight,containerWidth,height = 50) {
+
+      this.containerHeight = containerHeight                              //容器高度
+      this.containerWidth = containerWidth                                //容器宽度
+      this.height = height                                                //轨道高度
+      this.tracks = []                                                    //轨道实例
+      this.tracksCount = Math.floor(this.containerHeight / this.height)   //轨道数量
+      
+      //初始化轨道对象
+      this.init = function() {
+        for(let i = 0;i < this.tracksCount;i++) {
+          this.tracks[i] = {
+            value: [],
+            index: i
+          }
+        }
+      }
+
+      //获取轨道的最后一个弹幕
+      this.getLastChild = function(track) {
+        const length = Math.max(track.value.length - 1, 0)
+        const index = track.index
+        return {
+          child: track.value[length],
+          index
+        }
+      }
+
+      //获取可以进入的轨道
+      this.getTrack = function() {
+        const canEnterTracks = []            //可以进入的轨道集合
+        const lastChildren = this.tracks.map(track => this.getLastChild(track))
+        lastChildren.forEach((item,index) => {
+          //如果当前轨道没有最后一个元素
+          if(item.child === undefined) {
+            canEnterTracks.push(item)
+          }else{
+            const { left, width, right } = item.child.node.getBoundingClientRect()
+            //可以转化为 相同路程,不同车长,同一速度下, 前车要开出多少距离不会被后车追及
+            // che1 + width / v <= width / v
+            // if(!right) console.log(right)
+            if(right < this.containerWidth) canEnterTracks.push(item)
+          }
+        })
+        return this.getRandomTrack(canEnterTracks)
+      }
+
+      //随机取轨道
+      this.getRandomTrack = function(tracks) {
+        if(tracks.length > 0) {
+          const randomIndex = Math.floor(Math.random() * tracks.length)
+          return tracks[randomIndex]['index']
+        }else{
+          return undefined
+        }
+      }
+
+      //resize处理函数
+      this.resize = function(containerWidth,containerHeight) {
+        //如果轨道数量减少,已经装载的弹幕不做处理
+        this.containerHeight = containerHeight
+        this.containerWidth = containerWidth
+        this.tracksCount = Math.floor(this.containerHeight / this.height)
+
+        //建立新的轨道实例合并旧的轨道
+        const newTracks = []
+        for(let i = 0;i < this.tracksCount;i++) {
+          if(this.tracks[i]) {
+            newTracks[i] = this.tracks[i]
+          }else{
+            newTracks[i] = {
+              value: [],
+              index: i
+            }
+          }
+        }
+        this.tracks = newTracks
+      }
+
+      this.init()
+    }
+  </script>
+  <script>
+    //ratio = 4.7
+    //manager
+    function DanmuManager(container,gap = 0,limit = 150,interval = 1) {
+
+      if(!container || !(container instanceof HTMLElement)) {
+        throw new Error('container must be HTMLElment and required')
+        return
+      }
+
+      const { width, height } = container.getBoundingClientRect()
+
+      this.container = container                             //容器DOM
+      this.ratio = 9.6                                       //容器宽度和速度的比值
+      this.velocity = Math.floor(width / this.ratio)         //弹幕移动速度
+      this.width = width                                     //容器宽度
+      this.height = height                                   //容器高度
+      this.gap = gap                                         //弹幕间隔
+      this.limit = limit                                     //弹幕最大渲染量
+      this.renderDanmu = []                                  //要渲染的弹幕
+      this.danmuPool = []                                    //弹幕池
+      this.interval = interval                               //渲染频率
+      this.loopTimer = null                                  //循环渲染定时器
+      this.trackManager = new TrackManager(height,width)     //轨道管理实例
+      
+      //渲染的弹幕数量
+      this.getRenderLength = function() {
+        return this.renderDanmu.length
+      }
+
+      //未渲染弹幕数量
+      this.getDanmuPoolLength = function() {
+        return this.danmuPool.length
+      }
+
+      //总弹幕数量
+      this.getFullDanmuLength = function() {
+        return this.renderDanmu.length + this.danmuPool.length
+      }
+
+      //发送弹幕
+      this.send = function(danmu) {
+        this.danmuPool.push(danmu)
+      }
+
+      //隐藏弹幕
+      this.hidde = function() {
+        this.container.style.visibility = 'hidden'
+      }
+
+      //显示弹幕
+      this.show = function() {
+        this.container.style.visibility = 'visible'
+      }
+
+      //停止弹幕
+      this.stop = function() {
+        clearInterval(this.loopTimer)
+        this.loopTimer = null
+        this.container.innerHTML = ''
+        this.trackManager = new TrackManager(height,width)
+        this.renderDanmu = []
+        this.danmuPool = []
+      }
+
+      //填充渲染弹幕
+      this.fillRenderDanmu = function() {
+        const renderCount = this.limit - this.renderDanmu.length
+        for(let i = 0;i < renderCount;i++) {
+          const danmu = this.danmuPool.shift()
+          if(danmu) this.renderDanmu.push(danmu)
+        }
+      }
+
+      //渲染弹幕
+      this.render = function() {
+        const self = this
+        this.renderDanmu.forEach(danmu => {
+          if(danmu && !danmu.rendered) {
+            //查看是否有可以进入的轨道
+            const trackIndex = this.trackManager.getTrack()
+            if(trackIndex === undefined) {
+              return 
+            }else{
+              this.trackManager.tracks[trackIndex].value.push(danmu)
+            }
+            
+            //计算top
+            const top = trackIndex * this.trackManager.height
+
+            danmu.render(this.container,top,this.width,this.velocity,this.trackManager.height)
+            //过渡结束移除
+            danmu.handleEnd = function() {
+              const index = self.renderDanmu.findIndex(item => item === danmu)
+              self.renderDanmu.splice(index,1)
+              //如果resize,轨道可能会不存在
+              if(trackIndex >= self.trackManager.tracksCount) return
+              // const ohterIndex = self.trackManager.tracks[trackIndex].value.findIndex(item => item === danmu)
+              self.trackManager.tracks[trackIndex].value.shift()
+            }
+          }
+        })
+      }
+
+      //循环渲染
+      this.loopRender = function() {
+        const self = this
+        this.loopTimer = setInterval(function() {
+          self.fillRenderDanmu()
+          self.render()
+        },this.interval * 1000)
+      }
+
+      //resize 
+      this.resize = function() {
+        const { width, height } = this.container.getBoundingClientRect()
+        this.velocity = Math.floor(width / this.ratio)
+        const widthDiff = width - this.width
+        this.width = width
+        this.height = height
+        this.trackManager.resize(width,height)
+        this.renderDanmu.forEach(danmu => danmu.resize(this.velocity))
+      }
+
+    }
+  </script>
+  <script>
+    //测试发送弹幕
+
+    const danmuManager = new DanmuManager(document.getElementById('container'))
+
+    //填充弹幕数据
+    const testData = [
+      'test',
+      'Imtaotao',
+      'Supertaotao',
+      'I can see it',
+      'Do you feel alright?',
+      'Yes, I feel wonderfull tonight',
+      'Tell me someday we\'ll get together'
+    ] 
+
+    let sign = 1
+
+    function getRandomData() {
+      const index = Math.floor(Math.random() * 7)
+      return sign + '' + testData[index]
+    }
+
+    
+
+    function test() {
+      danmuManager.send(new Danmu(getRandomData()))
+      sign++
+      // if(sign > 10) return
+      setTimeout(() => {
+        test()
+      },250)
+    }
+
+    danmuManager.loopRender()
+
+    window.onresize = function() {
+      danmuManager.resize()
+    }
+
+    test()
+
+  </script>
+</body>
+</html>
