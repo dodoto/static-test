@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>lottery generator</title>
+</head>
+
+<body>
+  <h1>refresh page to get new lottery number</h1>
+  <p></p>
+  <script>
+    const generate = (count) => Array(count).fill(1).map((_, index) => index + 1);
+    const get = (count, source) => {
+      const result = [];
+      for (let i = 0; i < count; i++) {
+        const len = source.length;
+        const index = Math.min(Math.round(len * Math.random()), len - 1);
+        result.push(source[index]);
+        source.splice(index, 1);
+      }
+      return result.sort((a, b) => a - b);
+    };
+    const LEFT_COUNT = 5;
+    const RIGHT_COUNT = 2;
+    const LEFT = generate(35);
+    const RIGHT = generate(12);
+
+
+    const LEFT_RESULT = get(LEFT_COUNT, LEFT);
+    const RIGHT_RESULT = get(RIGHT_COUNT, RIGHT);
+
+    const result = LEFT_RESULT.concat(RIGHT_RESULT);
+
+    console.log(result);
+    const p = document.getElementsByTagName('p')[0];
+    p.innerHTML = `result: ${result.join(' ')}`;
+
+  </script>
+</body>
+
+</html>
